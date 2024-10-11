@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 from scipy.ndimage import gaussian_filter
-#from dataset_tools import image_tools as it
-#from dataset_tools import mhio
+#from modules.dataset_tools import image_tools as it
+#from modules.dataset_tools import mhio
 
 import image_tools as it
 import mhio

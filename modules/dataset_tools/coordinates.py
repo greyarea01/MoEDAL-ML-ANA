@@ -2,14 +2,14 @@
 
 
 import numpy as np
-from dataset_tools import mhio
+from modules.dataset_tools import mhio
 
 # Distance between 2 coordinate arrays
 from scipy.spatial.distance import cdist
 
 
 #// Path to retrive scanning metadata JSON
-img_metadata_location = '/home/millward/MLnov20/dataset_tools/metadata/Image_location_metadata.txt'
+img_metadata_location = 'modules/dataset_tools/metadata/Image_location_metadata.txt'
 
 
 """

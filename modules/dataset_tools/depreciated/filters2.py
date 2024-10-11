@@ -20,8 +20,8 @@ from scipy.ndimage import maximum
 from scipy.ndimage import gaussian_filter1d
 
 
-from dataset_tools import image_tools as it
-from dataset_tools import mhio
+from modules.dataset_tools import image_tools as it
+from modules.dataset_tools import mhio
 
 """
 	Filters -2 - attempt at producing new / more effective image filters
