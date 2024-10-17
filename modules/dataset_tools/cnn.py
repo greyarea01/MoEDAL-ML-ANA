@@ -1,3 +1,5 @@
+import keras
+
 def make_inference_model( path='./MLout/fold-1.h5',
                           layercut=10,shape=(480,640,8),
                           verbose=True):
