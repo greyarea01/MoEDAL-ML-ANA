@@ -1,2 +1,6 @@
 
 *.pyc
+/gallery/
+/numpy_data_eval/
+/train_data/
+/scribble.py
