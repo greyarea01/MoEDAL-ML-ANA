@@ -57,6 +57,22 @@ def test_overlap(true, pred, tolerance=10):  # copied from prev pit finder code
     """
     Calculate absoloute true positive / negative rates per image pair assuming XY = true
     """
+    print(
+        "\nWARNING: This function does not use Euclidean distance to "
+        "determine whether two points overlap.\n"
+        "Instead, it compares the X and Y coordinates independently, "
+        "requiring each to fall within the specified tolerance.\n"
+        "This approach is not generally safe and may produce misleading "
+        "results. It should only be used if you understand its "
+        "limitations and explicitly intend to use this matching method.\n"
+    )
+
+    confirmation = input("Do you want to proceed? (yes/no): ").strip().lower()
+
+    if confirmation == "no":
+        raise RuntimeError("Operation cancelled: User declined coordinate-wise matching.")
+    elif confirmation != "yes":
+        raise ValueError("Invalid response. Please enter 'yes' or 'no'.")
     xnew, ynew = [], []
     for x, y in zip(extract_coord(true, "x"), extract_coord(true, "y")):
         for x2, y2 in zip(extract_coord(pred, "x"), extract_coord(pred, "y")):
