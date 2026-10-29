@@ -184,11 +184,11 @@ def stitch_images_optimized(global_x_range, global_y_range, dataset_key, output_
 
 # Example usage:
 stitch_images_optimized(
-	global_x_range=(8800, 9000),  # Global x-coordinate range.
-	global_y_range=(-300, 500),  # Global y-coordinate range.
-	dataset_key="clean_front",  # Dataset to use.
+	global_x_range=(6000, 7000),  # Global x-coordinate range.
+	global_y_range=(4000, 5000),  # Global y-coordinate range.
+	dataset_key="exposed_front",  # Dataset to use.
 	output_dir="stitched_images",  # Directory to save output.
-	scale_factor=1  # 1:1 mapping (no scaling).
+	scale_factor=2  # 1:1 mapping (no scaling).
 )
 
 """
