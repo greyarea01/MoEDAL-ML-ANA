@@ -106,6 +106,7 @@ def create_image_panel(global_coord=None, save_folder="gallery", title="Image Pa
     clean_back_ixy = CS.convert(clean_front_ixy, 'ccr0')
     exposed_front_ixy = CS.convert(clean_front_ixy, 'cd')
     exposed_back_ixy = CS.convert(clean_front_ixy, 'cdr')
+    print(clean_back_ixy)
 
     # Adjust indices to align with dataset specifications
     clean_front_ixy = tuple([clean_front_ixy[0] - 251] + list(clean_front_ixy[1:]))
@@ -177,9 +178,13 @@ def create_image_panel(global_coord=None, save_folder="gallery", title="Image Pa
 
 # Example usage
 create_image_panel(
-    global_coord=[6171, -206],
+    global_coord=[11881, 6789],
     save_folder="gallery/scratch",
     title="[6171, -206]",
     description="Example image panel with legend and adjustable crop size.",
+    clean_front_path="numpy_data_eval/preprocessed_clean_eval.npy",
+    clean_back_path="numpy_data_eval/preprocessed_clean_reverse_eval.npy",
+    exposed_front_path="numpy_data_eval/preprocessed_dirty_eval.npy",
+    exposed_back_path="numpy_data_eval/preprocessed_dirty_reverse_eval.npy",
     crop_size=64
 )
