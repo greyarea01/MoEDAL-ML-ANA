@@ -22,7 +22,7 @@ def draw_datum( foil='clean2_s',
                 datum_points = [(1,322,242),(195,561,15),(351,600,248)],
                 path='/home/millward/Moedal_data/febdat/png_nov/{0:}{1:}_{2:}.png'):
     """
-    For a datum point, in (i=image# , x , y ) coords, draw 2 concentric circles, radius 195 pixels
+    For a datum point, in (i=image# , x , y ) coords, draw 2 concentric circles, radius 165 pixels
     This should align with the alignment hole shown in the background image#
     """
     for datum in datum_points:

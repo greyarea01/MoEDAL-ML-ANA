@@ -2,6 +2,7 @@ import numpy as np
 from modules.dataset_tools import coordinates, mhio
 import matplotlib.pyplot as plt
 from modules.compare.tools import extract_coord
+from modules.pipeline_paths import artifact_path
 
 '''
 Compare two lists of pits detected by the FCN model from different exposures (front and back).
@@ -28,7 +29,7 @@ def plot(list1, list2, name1, name2, save=False):
     plt.ylabel("Y")
     plt.legend((C1, Cr), (name1, name2), scatterpoints=1, loc=0, ncol=2, fontsize=8)
     if save:
-        plt.savefig(f"plots/FCN_pr_alignment_{name1}_and_{name2}.png", dpi=100)
+        plt.savefig(artifact_path(f"plots/FCN_pr_alignment_{name1}_and_{name2}.png", for_write=True), dpi=100)
     plt.show()
 
 

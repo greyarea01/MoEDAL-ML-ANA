@@ -22,6 +22,7 @@ purity = A / (A+C)
 import numpy as np
 from modules.dataset_tools import coordinates, mhio
 import matplotlib.pyplot as plt
+from modules.pipeline_paths import artifact_path
 from math import ceil
 
 
@@ -117,7 +118,7 @@ def evaluate_efficiency_purity_CNN():
     ax.legend(lns, labs, loc=0)
 
     plt.show()
-    fig.savefig('plots/eff_pur_CNN', dpi=200, bbox_inches='tight')
+    fig.savefig(artifact_path('plots/eff_pur_CNN.png', for_write=True), dpi=200, bbox_inches='tight')
 
 
 # Call the main function to evaluate efficiency and purity

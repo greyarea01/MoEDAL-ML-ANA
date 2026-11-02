@@ -2,6 +2,7 @@ import numpy as np
 from modules.dataset_tools import coordinates, mhio
 import matplotlib.pyplot as plt
 from modules.compare.tools import extract_coord
+from modules.pipeline_paths import artifact_path
 
 
 def plot(list, dist, pred_list, name="FCN_front", log=False, save=False):
@@ -32,7 +33,7 @@ def plot(list, dist, pred_list, name="FCN_front", log=False, save=False):
     plt.xlabel("dx")
     plt.ylabel("count")
     if save:
-        plt.savefig("plots/" + name + "_dx", dpi=100)
+        plt.savefig(artifact_path(f"plots/{name}_dx.png", for_write=True), dpi=100)
     plt.show()
 
     # Plot dy
@@ -48,7 +49,7 @@ def plot(list, dist, pred_list, name="FCN_front", log=False, save=False):
     plt.xlabel("dy")
     plt.ylabel("count")
     if save:
-        plt.savefig("plots/" + name + "_dy", dpi=100)
+        plt.savefig(artifact_path(f"plots/{name}_dy.png", for_write=True), dpi=100)
     plt.show()
 
     # Plot ds (distance)
@@ -64,7 +65,7 @@ def plot(list, dist, pred_list, name="FCN_front", log=False, save=False):
     plt.xlabel("ds")
     plt.ylabel("count")
     if save:
-        plt.savefig("plots/" + name + "_ds", dpi=100)
+        plt.savefig(artifact_path(f"plots/{name}_ds.png", for_write=True), dpi=100)
     plt.show()
 
     # Scatter plot dx vs dy
@@ -74,7 +75,7 @@ def plot(list, dist, pred_list, name="FCN_front", log=False, save=False):
     plt.xlabel("dx")
     plt.ylabel("dy")
     if save:
-        plt.savefig("plots/" + name + "_dx_dy", dpi=100)
+        plt.savefig(artifact_path(f"plots/{name}_dx_dy.png", for_write=True), dpi=100)
     plt.show()
 
     # Scatter plot x vs dx
@@ -84,7 +85,7 @@ def plot(list, dist, pred_list, name="FCN_front", log=False, save=False):
     plt.xlabel("x")
     plt.ylabel("dx")
     if save:
-        plt.savefig("plots/" + name + "_x_dx", dpi=100)
+        plt.savefig(artifact_path(f"plots/{name}_x_dx.png", for_write=True), dpi=100)
     plt.show()
 
     # Scatter plot y vs dy
@@ -94,7 +95,7 @@ def plot(list, dist, pred_list, name="FCN_front", log=False, save=False):
     plt.xlabel("y")
     plt.ylabel("dy")
     if save:
-        plt.savefig("plots/" + name + "_y_dy", dpi=100)
+        plt.savefig(artifact_path(f"plots/{name}_y_dy.png", for_write=True), dpi=100)
     plt.show()
 
 

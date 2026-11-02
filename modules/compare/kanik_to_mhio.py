@@ -1,57 +1,123 @@
-import numpy as np
+"""Convert DCC centroid text outputs to the pipeline's global-coordinate format."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
 from modules.dataset_tools import coordinates, mhio
-import matplotlib.pyplot as plt
-from tools import extract_coord
+from modules.pipeline_paths import activate_pipeline_run, sha256_file, source_path
 
 
-def plot(list1, name1, save=False):
-	plt.figure(figsize=(15, 15), dpi=100)
-	C1 = plt.scatter(x=extract_coord(list1, "x"), y=extract_coord(list1, "y"), marker="o", s=30, color="green")
-	plt.title(name1)
-	plt.xlabel("X")
-	plt.ylabel("Y")
-	if save:
-		plt.savefig("plots/"+name1, dpi=100)
-	plt.show()
-
-'''
-import kanik's txt file
-get coordinates
-add to predicted list
-convert to global c1
-save in mhio
-'''
-threshold = 4
-x_threshold = 640 - threshold
-y_theshold = 480 - threshold
-
-predicted_list = []
-
-fileIN = open("kanik/og_data/DirtyTestReverseCentroid.txt")
-lines = fileIN.readlines()
-
-print(len(lines))
-
-for line in lines:
-    x = line.strip().split("\t")
-    try:
-        x = list(map(float, x))
-        if x[0] == '0' or x[1] < threshold or x[2] < threshold or x[1] > x_threshold or x[2] > y_theshold:
-            continue
-        predicted_list.append([float(x[0]), float(x[1]), float(x[2])])
-    except Exception:
-        pass
+def _load_local_centroids(path: Path, edge_threshold: int) -> list[list[float]]:
+    x_max = 640 - edge_threshold
+    y_max = 480 - edge_threshold
+    points = []
+    with path.open(encoding="utf-8") as stream:
+        for line in stream:
+            fields = line.strip().split("\t")
+            try:
+                image_number, x_value, y_value = map(float, fields)
+            except (TypeError, ValueError):
+                continue
+            if (
+                image_number == 0
+                or x_value < edge_threshold
+                or y_value < edge_threshold
+                or x_value > x_max
+                or y_value > y_max
+            ):
+                continue
+            points.append([image_number, x_value, y_value])
+    return points
 
 
-print(len(predicted_list))
-cs = coordinates.Coord_system()
-cs['dr'].flipped = True    # converting coordinates to global
-cs['dr'].reverse = True
-for i in range(len(predicted_list)):
-    predicted_list[i] = cs.convert(predicted_list[i], 'drc')
-    predicted_list[i] = cs['c1'].get_gxy(predicted_list[i])
-    predicted_list[i] = predicted_list[i].tolist()
+def _to_global(
+    points: list[list[float]], *, side: str
+) -> list[list[float]]:
+    system = coordinates.Coord_system()
+    if side == "front":
+        system["d"].flipped = False
+        system["d"].reverse = False
+        conversion = "dc"
+    elif side == "back":
+        system["dr"].flipped = True
+        system["dr"].reverse = True
+        conversion = "drc"
+    else:
+        raise ValueError(f"Unsupported side: {side}")
 
-#plot(predicted_list, "pred_reverse_DCC")
+    output = []
+    for point in points:
+        c1_coordinate = system.convert(point, conversion)
+        output.append(system["c1"].get_gxy(c1_coordinate).tolist())
+    return output
 
-mhio.save_json(predicted_list, "kanik/final_reverse_pr.txt")
+
+def convert_dcc_predictions(
+    *,
+    front_source: str = "kanik/og_data/DirtyTestCentroid.txt",
+    back_source: str = "kanik/og_data/DirtyTestReverseCentroid.txt",
+    edge_threshold: int = 4,
+) -> dict:
+    """Convert both DCC sides and save them under the active run."""
+    if not 0 <= edge_threshold < 240:
+        raise ValueError("edge_threshold must be between 0 and 239 pixels")
+    front_path = source_path(front_source)
+    back_path = source_path(back_source)
+    front_local = _load_local_centroids(front_path, edge_threshold)
+    back_local = _load_local_centroids(back_path, edge_threshold)
+    front_global = _to_global(front_local, side="front")
+    back_global = _to_global(back_local, side="back")
+    mhio.save_json(front_global, "predicted_etch_pits/DCC/final_pr.txt")
+    mhio.save_json(back_global, "predicted_etch_pits/DCC/final_reverse_pr.txt")
+    report = {
+        "edge_threshold": edge_threshold,
+        "front": {
+            "source": str(front_path),
+            "source_sha256": sha256_file(front_path),
+            "count": len(front_global),
+        },
+        "back": {
+            "source": str(back_path),
+            "source_sha256": sha256_file(back_path),
+            "count": len(back_global),
+        },
+        "mapping": {
+            "front": {"system": "d_to_c1", "flipped": False, "reverse": False},
+            "back": {"system": "dr_to_c1", "flipped": True, "reverse": True},
+        },
+    }
+    mhio.save_json(report, "predicted_etch_pits/DCC/conversion_metadata.json")
+    return report
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--run-dir", required=True)
+    parser.add_argument("--front-source", default="kanik/og_data/DirtyTestCentroid.txt")
+    parser.add_argument(
+        "--back-source", default="kanik/og_data/DirtyTestReverseCentroid.txt"
+    )
+    parser.add_argument("--edge-threshold", type=int, default=4)
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = _parse_args()
+    activate_pipeline_run(args.run_dir)
+    print(
+        json.dumps(
+            convert_dcc_predictions(
+                front_source=args.front_source,
+                back_source=args.back_source,
+                edge_threshold=args.edge_threshold,
+            ),
+            indent=2,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

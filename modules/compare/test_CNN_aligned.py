@@ -2,6 +2,7 @@ import numpy as np
 from modules.dataset_tools import coordinates, mhio
 import matplotlib.pyplot as plt
 from modules.compare.tools import extract_coord
+from modules.pipeline_paths import artifact_path
 
 
 def plot(true, predicted, name, save=False):
@@ -25,7 +26,7 @@ def plot(true, predicted, name, save=False):
     plt.ylabel("Y")
     plt.legend((tr, pr), ('True pits', 'Predicted pits_CNN'), scatterpoints=1, loc=0, ncol=2, fontsize=8)
     if save:
-        plt.savefig("plots/" + name, dpi=100)
+        plt.savefig(artifact_path(f"plots/{name}.png", for_write=True), dpi=100)
     plt.show()
 
 

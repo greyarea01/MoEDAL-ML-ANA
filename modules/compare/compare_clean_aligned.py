@@ -2,6 +2,7 @@ import numpy as np
 from modules.dataset_tools import coordinates, mhio
 import matplotlib.pyplot as plt
 from modules.compare.tools import extract_coord
+from modules.pipeline_paths import artifact_path
 
 '''
 This script compares two lists of etch pits (e.g., from different models or methods) 
@@ -31,7 +32,7 @@ def plot(list1, list2, name1, name2, save=True):
 	plt.ylabel("Y")  # Y-axis label
 	plt.legend((C1, Cr), (name1, name2), scatterpoints=1, loc=0, ncol=2, fontsize=8)  # Add a legend for both pit sets
 	if save:
-		plt.savefig(f"plots/clean_{name1}_and_{name2}.png", dpi=100)  # Save the plot if 'save' is True
+		plt.savefig(artifact_path(f"plots/clean_{name1}_and_{name2}.png", for_write=True), dpi=100)  # Save the plot if 'save' is True
 	plt.show()  # Display the plot
 
 

@@ -6,6 +6,7 @@ from modules.dataset_tools import coordinates
 import gc
 from tqdm import tqdm  # For progress tracking
 from skimage.measure import block_reduce  # For optional downscaling
+from modules.pipeline_paths import run_output_path, source_path
 
 
 def convert_global_to_local(global_coordinate, dataset, coord_system):
@@ -75,8 +76,14 @@ def stitch_images_optimized(global_x_range, global_y_range, dataset_key, output_
 	if dataset_key not in dataset_paths:
 		raise ValueError(f"Invalid dataset_key: {dataset_key}. Choose from {list(dataset_paths.keys())}.")
 
+	x_min, x_max = global_x_range
+	y_min, y_max = global_y_range
+	scale_suffix = f"_scaled{scale_factor}" if scale_factor > 1 else ""
+	filename = f"{dataset_key}_{x_min}_{x_max}_{y_min}_{y_max}{scale_suffix}.png"
+	save_path = run_output_path(os.path.join(output_dir, filename))
+
 	# Load the image data.
-	image_data = np.load(dataset_paths[dataset_key])
+	image_data = np.load(source_path(dataset_paths[dataset_key]))
 	# For exposed datasets, use only the 8th channel.
 	if dataset_key in ['exposed_front', 'exposed_back']:
 		image_data = image_data[:, :, :, 8]
@@ -91,8 +98,6 @@ def stitch_images_optimized(global_x_range, global_y_range, dataset_key, output_
 	CS['dr'].reverse = True
 
 	# Determine the dimensions of the global canvas.
-	x_min, x_max = global_x_range
-	y_min, y_max = global_y_range
 	canvas_width = x_max - x_min + 1
 	canvas_height = y_max - y_min + 1
 
@@ -164,32 +169,21 @@ def stitch_images_optimized(global_x_range, global_y_range, dataset_key, output_
 	# Optional: Downscale the stitched image if a scale factor greater than 1 is specified.
 	if scale_factor > 1:
 		stitched_image = block_reduce(stitched_image, block_size=(scale_factor, scale_factor), func=np.mean)
-		scale_suffix = f"_scaled{scale_factor}"
-	else:
-		scale_suffix = ""
 
-	# Generate the output filename and title.
-	dataset_name = dataset_key.replace('_', ' ').title()
-	filename = f"{dataset_key}_{x_min}_{x_max}_{y_min}_{y_max}{scale_suffix}.png"
-	title = f"Stitched Image ({dataset_name}): x=({x_min}-{x_max}), y=({y_min}-{y_max}), scale_factor={scale_factor}"
-
-	# Ensure the output directory exists.
-	os.makedirs(output_dir, exist_ok=True)
-	save_path = os.path.join(output_dir, filename)
 
 	# Save the stitched image without extra margins.
 	plt.imsave(save_path, stitched_image, cmap='gray')
 	print(f"Optimized stitched image saved to {save_path}")
 
 
-# Example usage:
-stitch_images_optimized(
-	global_x_range=(6000, 7000),  # Global x-coordinate range.
-	global_y_range=(4000, 5000),  # Global y-coordinate range.
-	dataset_key="exposed_front",  # Dataset to use.
-	output_dir="stitched_images",  # Directory to save output.
-	scale_factor=2  # 1:1 mapping (no scaling).
-)
+if __name__ == "__main__":
+	stitch_images_optimized(
+		global_x_range=(6000, 7000),
+		global_y_range=(4000, 5000),
+		dataset_key="exposed_front",
+		output_dir="stitched_images",
+		scale_factor=2,
+	)
 
 """
 full img range

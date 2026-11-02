@@ -1,110 +1,103 @@
-from modules.dataset_tools import mhio, coordinates
-import numpy as np
+"""Assign stable IDs to clean pits and aligned FCN/DCC false positives."""
+
+from __future__ import annotations
+
 from collections import defaultdict
 
-"""
-This script processes coordinates from FCN and DCC false positive lists to categorize 
-them into shared clusters and unique points. IDs are assigned to organize and analyze 
-overlapping and unique points.
+import numpy as np
 
-ID SYSTEMS:
-1. `Cxxxx`: Clean pit coordinates, unique to each point.
-2. `FADxxxx`: Shared false positives in FCN and DCC lists within a tolerance of 15 pixels. Last 4 digits is shared between a cluster for FAD and DAF.
-3. `DAFxxxx`: Shared false positives in DCC and FCN lists within a tolerance of 15 pixels.
-4. `FMDxxxx`: Unique false positives in FCN list (not in DCC).
-5. `DMFxxxx`: Unique false positives in DCC list (not in FCN).
-"""
+from modules.dataset_tools import coordinates, mhio
 
-# Step 1: Load the list of clean pit coordinates
-# Assign unique IDs prefixed with 'C' (e.g., "C0001") for clean pits
-common_list = mhio.load_json("Aligned_clean.txt")
-common_list_with_ids = [{"id": f"C{str(idx).zfill(4)}", "coordinate": coord} for idx, coord in enumerate(common_list)]
 
-# Step 2: Load the false positives list from FCN and DCC methods
-# Each list contains the coordinates of false positives detected by the respective method
-false_pos_list_FCN = mhio.load_json("predicted_list/FCN/aligned/final_false_pos.txt")
-false_pos_list_DCC = mhio.load_json("predicted_list/DCC/aligned/final_false_pos.txt")
+def generate_pit_ids(tolerance: float = 15) -> dict[str, int]:
+    """Generate all ID lists inside the active pipeline run."""
+    common_list = mhio.load_json("Aligned_clean.txt")
+    common_list_with_ids = [
+        {"id": f"C{idx:04d}", "coordinate": coord}
+        for idx, coord in enumerate(common_list)
+    ]
+    false_pos_fcn = mhio.load_json(
+        "predicted_list/FCN/aligned/final_false_pos.txt"
+    )
+    false_pos_dcc = mhio.load_json(
+        "predicted_list/DCC/aligned/final_false_pos.txt"
+    )
 
-# Step 3: Identify overlaps between FCN and DCC false positives within a tolerance
-tolerance = 15  # Maximum distance for two points to be considered overlapping
-overlap_checker = coordinates.Overlap(false_pos_list_FCN, false_pos_list_DCC, tolerance)
-overlap_pairs = np.where(overlap_checker.dist < tolerance)
+    overlap = coordinates.Overlap(false_pos_fcn, false_pos_dcc, tolerance)
+    overlap_pairs = np.where(overlap.dist < tolerance)
+    common_ids_fcn = overlap_pairs[0]
+    common_ids_dcc = overlap_pairs[1]
 
-# Extract indices of overlapping points in FCN and DCC lists
-common_ids_FCN = overlap_pairs[0]
-common_ids_DCC = overlap_pairs[1]
+    graph = defaultdict(set)
+    dcc_offset = len(false_pos_fcn)
+    for fcn_idx, dcc_idx in zip(common_ids_fcn, common_ids_dcc):
+        graph[int(fcn_idx)].add(dcc_offset + int(dcc_idx))
+        graph[dcc_offset + int(dcc_idx)].add(int(fcn_idx))
 
-# Step 4: Build connectivity graph
-# Use a dictionary to track connected components of overlapping points
-graph = defaultdict(set)
+    visited = set()
+    clusters = []
 
-# Add edges for overlapping pairs between FCN and DCC lists
-for fcn_idx, dcc_idx in zip(common_ids_FCN, common_ids_DCC):
-    graph[fcn_idx].add(len(false_pos_list_FCN) + dcc_idx)  # Map DCC indices uniquely
-    graph[len(false_pos_list_FCN) + dcc_idx].add(fcn_idx)  # Add reverse connection
+    def dfs(node, cluster):
+        visited.add(node)
+        cluster.append(node)
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                dfs(neighbor, cluster)
 
-# Step 5: Find connected components (clusters of overlapping points)
-visited = set()
-clusters = []
+    for node in graph:
+        if node not in visited:
+            cluster = []
+            dfs(node, cluster)
+            clusters.append(cluster)
 
-def dfs(node, cluster):
-    """Depth-First Search to find all connected nodes in the graph."""
-    visited.add(node)
-    cluster.append(node)
-    for neighbor in graph[node]:
-        if neighbor not in visited:
-            dfs(neighbor, cluster)
+    cluster_ids = {}
+    for index, cluster in enumerate(clusters):
+        cluster_id = f"{index:04d}"
+        for node in cluster:
+            cluster_ids[node] = cluster_id
 
-# Perform DFS for all unvisited nodes to find clusters
-for node in graph:
-    if node not in visited:
-        cluster = []
-        dfs(node, cluster)
-        clusters.append(cluster)
+    common_fpf = [
+        {"id": f"FAD{cluster_ids[index]}", "coordinate": coordinate}
+        for index, coordinate in enumerate(false_pos_fcn)
+        if index in cluster_ids
+    ]
+    common_fpd = [
+        {
+            "id": f"DAF{cluster_ids[dcc_offset + index]}",
+            "coordinate": coordinate,
+        }
+        for index, coordinate in enumerate(false_pos_dcc)
+        if dcc_offset + index in cluster_ids
+    ]
 
-# Step 6: Assign shared IDs to clusters
-cluster_ids = {}
-for idx, cluster in enumerate(clusters):
-    cluster_id = f"{str(idx).zfill(4)}"  # Shared 4-digit cluster ID
-    for node in cluster:
-        cluster_ids[node] = cluster_id
+    # Preserve the legacy set iteration used to assign the numeric ID suffixes.
+    unique_fcn_indices = set(range(len(false_pos_fcn))) - set(common_ids_fcn)
+    unique_dcc_indices = set(range(len(false_pos_dcc))) - set(common_ids_dcc)
+    unique_fcn = [
+        {"id": f"FMD{index:04d}", "coordinate": false_pos_fcn[source_index]}
+        for index, source_index in enumerate(unique_fcn_indices)
+    ]
+    unique_dcc = [
+        {"id": f"DMF{index:04d}", "coordinate": false_pos_dcc[source_index]}
+        for index, source_index in enumerate(unique_dcc_indices)
+    ]
 
-# Step 7: Generate shared IDs for `FAD` and `DAF`
-# FAD: FCN points that are part of overlapping clusters
-common_fpf = []
-for i in range(len(false_pos_list_FCN)):
-    if i in cluster_ids:
-        common_fpf.append({"id": f"FAD{cluster_ids[i]}", "coordinate": false_pos_list_FCN[i]})
+    mhio.save_json(common_fpf, "predicted_list/ids/FP_FCN_common_DCC_with_ids.txt")
+    mhio.save_json(common_fpd, "predicted_list/ids/FP_DCC_common_FCN_with_ids.txt")
+    mhio.save_json(unique_fcn, "predicted_list/ids/FP_unique_FCN_with_ids.txt")
+    mhio.save_json(unique_dcc, "predicted_list/ids/FP_unique_DCC_with_ids.txt")
+    mhio.save_json(common_list_with_ids, "predicted_list/ids/Aligned_clean_with_ids.txt")
 
-# DAF: DCC points that are part of overlapping clusters
-common_fpd = []
-for i in range(len(false_pos_list_DCC)):
-    node_idx = len(false_pos_list_FCN) + i  # Map DCC index uniquely
-    if node_idx in cluster_ids:
-        common_fpd.append({"id": f"DAF{cluster_ids[node_idx]}", "coordinate": false_pos_list_DCC[i]})
+    summary = {
+        "clean": len(common_list_with_ids),
+        "fcn_common": len(common_fpf),
+        "dcc_common": len(common_fpd),
+        "fcn_unique": len(unique_fcn),
+        "dcc_unique": len(unique_dcc),
+    }
+    print(summary)
+    return summary
 
-# Step 8: Generate IDs for unique points in FCN and DCC lists
-# FMD: Points in FCN but not in DCC
-unique_fcn_ids = set(range(len(false_pos_list_FCN))) - set(common_ids_FCN)
-unique_fcn_fps = [{"id": f"FMD{str(idx).zfill(4)}", "coordinate": false_pos_list_FCN[i]}
-                  for idx, i in enumerate(unique_fcn_ids)]
 
-# DMF: Points in DCC but not in FCN
-unique_dcc_ids = set(range(len(false_pos_list_DCC))) - set(common_ids_DCC)
-unique_dcc_fps = [{"id": f"DMF{str(idx).zfill(4)}", "coordinate": false_pos_list_DCC[i]}
-                  for idx, i in enumerate(unique_dcc_ids)]
-
-# Step 9: Save results to JSON files
-mhio.save_json(common_fpf, "predicted_list/ids/FP_FCN_common_DCC_with_ids.txt")
-mhio.save_json(common_fpd, "predicted_list/ids/FP_DCC_common_FCN_with_ids.txt")
-mhio.save_json(unique_fcn_fps, "predicted_list/ids/FP_unique_FCN_with_ids.txt")
-mhio.save_json(unique_dcc_fps, "predicted_list/ids/FP_unique_DCC_with_ids.txt")
-mhio.save_json(common_list_with_ids, "predicted_list/ids/Aligned_clean_with_ids.txt")
-
-# Summary of results
-print(f"Number of FAD (intersection) FPs in FCN: {len(common_fpf)}")
-print(f"Number of FAD (intersection) FPs in DCC: {len(common_fpd)}")
-print(f"Number of FMD (FCN minus DCC) FPs: {len(unique_fcn_fps)}")
-print(f"Number of DMF (DCC minus FCN) FPs: {len(unique_dcc_fps)}")
-
-print(common_list_with_ids)
+if __name__ == "__main__":
+    generate_pit_ids()

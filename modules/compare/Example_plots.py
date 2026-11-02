@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from modules.dataset_tools import coordinates
+from modules.pipeline_paths import run_output_path, source_path
 
 # -------------------------------------------------------
 # Configure global plotting style for publication-quality
@@ -95,7 +96,6 @@ def create_example_panel(
     Returns:
         None  (writes “{save_folder}/{save_name}.png”)
     """
-    os.makedirs(save_folder, exist_ok=True)
     primary_plot = True
 
     # 1) choose a fallback main coordinate if not explicitly provided
@@ -108,12 +108,18 @@ def create_example_panel(
         else:
             raise ValueError("Need at least one coordinate to center the crops.")
 
+    if save_name:
+        fname = save_name
+    else:
+        fname = f"example_plot_{global_coord[0]}_{global_coord[1]}"
+    out_path = run_output_path(os.path.join(save_folder, f"{fname}.png"))
+
     # 2) load the four 3D volumes (select slice 8 for the 4D arrays)
     image_data = {
-        'clean_front':   np.load(clean_front_path),
-        'clean_back':    np.load(clean_back_path),
-        'exposed_front': np.load(exposed_front_path)[:, :, :, 8],
-        'exposed_back':  np.load(exposed_back_path)[:, :, :, 8],
+        'clean_front':   np.load(source_path(clean_front_path)),
+        'clean_back':    np.load(source_path(clean_back_path)),
+        'exposed_front': np.load(source_path(exposed_front_path))[:, :, :, 8],
+        'exposed_back':  np.load(source_path(exposed_back_path))[:, :, :, 8],
     }
 
     # 3) set up coordinate converter for indexing each volume
@@ -277,22 +283,6 @@ def create_example_panel(
                  ha='center', va='bottom', wrap=True, fontsize=12)
 
     # 16) compose filename, save, and clean up
-    if save_name:
-        fname = save_name
-    else:
-        fname = f"example_plot_{global_coord[0]}_{global_coord[1]}"
-    out_path = os.path.join(save_folder, f"{fname}.png")
     plt.savefig(out_path, bbox_inches='tight')
     plt.close(fig)
     print(f"Panel image saved to {out_path}")
-
-
-create_example_panel(
-    global_coord=(120, 240),
-    save_folder="my_panels",
-    save_name="panel_120_240",
-    title="Sample Imaging Panel",
-    description="Top row: exposed scans; bottom row: clean scans.",
-    extra_fcn_coords=[(130,250), (110,230)],
-    extra_dcc_coords=[(125,245)]
-)

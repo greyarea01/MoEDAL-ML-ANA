@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from modules.dataset_tools import coordinates
+from modules.pipeline_paths import run_output_path, source_path
 
 def crop_image_with_boundary_and_padding(img, x, y, crop_size):
     """
@@ -71,9 +72,6 @@ def create_image_panel(global_coord=None, save_folder="gallery", title="Image Pa
     Returns:
         None
     """
-    # Ensure the output directory exists
-    os.makedirs(save_folder, exist_ok=True)
-
     # Check if global_coord is None and choose a fallback coordinate
     is_primary_provided = global_coord is not None
     if not is_primary_provided:
@@ -84,12 +82,17 @@ def create_image_panel(global_coord=None, save_folder="gallery", title="Image Pa
         else:
             raise ValueError("No primary or extra coordinates provided for cropping.")
 
+    file_title = title or f"panel_{global_coord[0]}_{global_coord[1]}"
+    save_path = run_output_path(
+        os.path.join(save_folder, f"{file_title.replace(' ', '_')}.png")
+    )
+
     # Load all necessary image data
     image_data = {
-        'clean_front': np.load(clean_front_path),
-        'clean_back': np.load(clean_back_path),
-        'exposed_front': np.load(exposed_front_path)[:, :, :, 8],  # Extracting the 8th channel
-        'exposed_back': np.load(exposed_back_path)[:, :, :, 8],   # Extracting the 8th channel
+        'clean_front': np.load(source_path(clean_front_path)),
+        'clean_back': np.load(source_path(clean_back_path)),
+        'exposed_front': np.load(source_path(exposed_front_path))[:, :, :, 8],  # Extracting the 8th channel
+        'exposed_back': np.load(source_path(exposed_back_path))[:, :, :, 8],   # Extracting the 8th channel
     }
 
     # Initialize the coordinate transformation system
@@ -167,24 +170,7 @@ def create_image_panel(global_coord=None, save_folder="gallery", title="Image Pa
         plt.figtext(0.5, 0.02, description, wrap=True, horizontalalignment='center', fontsize=12)
 
     # Save the panel as an image
-    save_path = os.path.join(save_folder, f"{title.replace(' ', '_')}.png")
     plt.savefig(save_path, bbox_inches='tight')
     plt.close()
 
     print(f"Panel saved at {save_path}")
-
-
-
-
-# Example usage
-create_image_panel(
-    global_coord=[11881, 6789],
-    save_folder="gallery/scratch",
-    title="[6171, -206]",
-    description="Example image panel with legend and adjustable crop size.",
-    clean_front_path="numpy_data_eval/preprocessed_clean_eval.npy",
-    clean_back_path="numpy_data_eval/preprocessed_clean_reverse_eval.npy",
-    exposed_front_path="numpy_data_eval/preprocessed_dirty_eval.npy",
-    exposed_back_path="numpy_data_eval/preprocessed_dirty_reverse_eval.npy",
-    crop_size=64
-)
