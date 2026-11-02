@@ -1,0 +1,51 @@
+{
+  "provenance": "historical_pre_refactor_preprocessed_coordinates",
+  "generated_in_this_run": false,
+  "edge_threshold_pixels": 4,
+  "sources": {
+    "front": {
+      "path": "kanik/og_data/DirtyTestCentroid.txt",
+      "sha256": "74b8f71d86806d8d93bdd9dbb0ee061a451dfbd28e44f2d319319a15945ebbb0"
+    },
+    "back": {
+      "path": "kanik/og_data/DirtyTestReverseCentroid.txt",
+      "sha256": "85662acbd6c1bf26821e788a2e127eb47b92a172ed5eb3731350e820adad6a9f"
+    }
+  },
+  "historical_mapping": {
+    "front": {
+      "preset": "dc",
+      "offset": [8, -4]
+    },
+    "back": {
+      "preset": "drc",
+      "offset": [10, 0],
+      "flipped": true,
+      "reverse": true
+    }
+  },
+  "current_repository_mapping": {
+    "front": {
+      "preset": "dc",
+      "offset": [10, -7]
+    },
+    "back": {
+      "preset": "drc",
+      "offset": [10, 0],
+      "flipped": true,
+      "reverse": true
+    }
+  },
+  "outputs": {
+    "front": {
+      "path": "predicted_etch_pits/DCC/final_pr.txt",
+      "sha256": "ce168de758f4a322e87f89b75fa4470e23179d0a8e2bdfa0dd1ab9e8950a79ed"
+    },
+    "back": {
+      "path": "predicted_etch_pits/DCC/final_reverse_pr.txt",
+      "sha256": "28619e2983077a8fcd7e973ec850060e19426cf268c2832c2d88a806cda14983"
+    }
+  },
+  "suitable_for_future_analysis": false,
+  "warning": "Paper-v1 compatibility artifact only. The front coordinates were generated with the historical dc offset (8, -4), whereas current code uses (10, -7)."
+}

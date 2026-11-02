@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-02T02:46:41.037391+00:00",
+  "project_root": "/home/aman/Moedal/MoEDAL-ML-ANA",
+  "run_root": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline",
+  "git": {
+    "revision": "c89b30557fbc8c339588790c06ae11294806f234",
+    "tracked_files_dirty": true
+  },
+  "metadata": {
+    "entry_point": "/home/aman/Moedal/MoEDAL-ML-ANA/run_pipeline.py",
+    "arguments": {
+      "run_dir": "pipeline_runs/paperV1_baseline",
+      "start_from": "preprocessed_predicted_coordinates",
+      "input_source": "pipeline_runs/paperV1_baseline",
+      "clean_id_registry": "clean_pit_id_registries/paperV1.json",
+      "fiducial_cut_file": [],
+      "model": "models/FCN/unet_ROC.keras",
+      "fcn_front_model_output": "model_outputs/FCN/front_probability_masks.npy",
+      "fcn_back_model_output": "model_outputs/FCN/back_probability_masks.npy",
+      "dcc_front_model_output": "kanik/og_data/DirtyTestCentroid.txt",
+      "dcc_back_model_output": "kanik/og_data/DirtyTestReverseCentroid.txt",
+      "front_images": "numpy_data_eval/preprocessed_dirty_eval.npy",
+      "back_images": "numpy_data_eval/preprocessed_dirty_reverse_eval.npy",
+      "batch_size": 4,
+      "require_gpu": false,
+      "front_threshold": null,
+      "back_threshold": null,
+      "sigma": null,
+      "alpha": null,
+      "beta": null,
+      "skip_spatial_plots": false,
+      "include_legacy_curves": false,
+      "skip_gallery": false,
+      "skip_example_panels": true
+    }
+  },
+  "seeded_artifacts": [
+    {
+      "relative_path": "predicted_etch_pits/CNN/final_pr.txt",
+      "source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/CNN/final_pr.txt",
+      "destination": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/CNN/final_pr.txt",
+      "sha256": "1473d4248c4373294ce0bce18acbca07d295ea7454d663e83541bbfd33a31113",
+      "size_bytes": 118213
+    },
+    {
+      "relative_path": "predicted_etch_pits/CNN/final_reverse_pr.txt",
+      "source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/CNN/final_reverse_pr.txt",
+      "destination": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/CNN/final_reverse_pr.txt",
+      "sha256": "68c7149f0a3ae7a6122bb7ee5cf3ccb832c505d8a4dfee3d38c108c0b9f5363c",
+      "size_bytes": 42383
+    },
+    {
+      "relative_path": "predicted_etch_pits/FCN/final_pr.txt",
+      "source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/FCN/final_pr.txt",
+      "destination": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/FCN/final_pr.txt",
+      "sha256": "585d035faab5fbc82f07a5cd5cc0df821233ea796dff440ca0020375bf5f5d46",
+      "size_bytes": 53428
+    },
+    {
+      "relative_path": "predicted_etch_pits/FCN/final_reverse_pr.txt",
+      "source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/FCN/final_reverse_pr.txt",
+      "destination": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/FCN/final_reverse_pr.txt",
+      "sha256": "ab74dc3b2c6c071d104338826cba6359aa1187510437b9f946200ffbcd9ad791",
+      "size_bytes": 53973
+    },
+    {
+      "relative_path": "predicted_etch_pits/DCC/final_pr.txt",
+      "source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/DCC/final_pr.txt",
+      "destination": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/DCC/final_pr.txt",
+      "sha256": "ce168de758f4a322e87f89b75fa4470e23179d0a8e2bdfa0dd1ab9e8950a79ed",
+      "size_bytes": 62166
+    },
+    {
+      "relative_path": "predicted_etch_pits/DCC/final_reverse_pr.txt",
+      "source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/DCC/final_reverse_pr.txt",
+      "destination": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/DCC/final_reverse_pr.txt",
+      "sha256": "28619e2983077a8fcd7e973ec850060e19426cf268c2832c2d88a806cda14983",
+      "size_bytes": 60987
+    },
+    {
+      "relative_path": "predicted_etch_pits/CNN/GXY_allchan_008thresh_eval.txt",
+      "source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/CNN/GXY_allchan_008thresh_eval.txt",
+      "destination": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/CNN/GXY_allchan_008thresh_eval.txt",
+      "sha256": "5afa3a4a194bb41af01534aaec400079a1a28486031c30690b48b643065522f0",
+      "size_bytes": 14897
+    },
+    {
+      "relative_path": "predicted_etch_pits/CNN/IXY_allchan_008thresh.txt",
+      "source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/CNN/IXY_allchan_008thresh.txt",
+      "destination": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/CNN/IXY_allchan_008thresh.txt",
+      "sha256": "c938dc202fdaf99cba62426a8d3db527260e271d5af53b937c99a2a0f4490013",
+      "size_bytes": 58334
+    },
+    {
+      "relative_path": "predicted_etch_pits/CNN/IXY_allchan_008thresh_eval.txt",
+      "source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/CNN/IXY_allchan_008thresh_eval.txt",
+      "destination": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/CNN/IXY_allchan_008thresh_eval.txt",
+      "sha256": "3c53c32a77f2c47fb7757aff4681b839771b9c8cfd542b31fef281a59fed3f13",
+      "size_bytes": 24021
+    },
+    {
+      "relative_path": "predicted_etch_pits/DCC/conversion_metadata.json",
+      "source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/DCC/conversion_metadata.json",
+      "destination": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline/predicted_etch_pits/DCC/conversion_metadata.json",
+      "sha256": "e776331d295c11cefb08cab977b1070d6fc4f7123359d06bfce5b20c8baa9981",
+      "size_bytes": 1460
+    }
+  ],
+  "source_inputs": [
+    {
+      "relative_path": "kanik/clean_aligned.txt",
+      "path": "/home/aman/Moedal/MoEDAL-ML-ANA/kanik/clean_aligned.txt",
+      "sha256": "899de4e3d0be967fdf5a57fc17283bfd856ec19d92ee02c069d5f42a3e27a710",
+      "size_bytes": 52590
+    },
+    {
+      "relative_path": "modules/dataset_tools/metadata/Image_location_metadata.txt",
+      "path": "/home/aman/Moedal/MoEDAL-ML-ANA/modules/dataset_tools/metadata/Image_location_metadata.txt",
+      "sha256": "6dd16a7234b9a2282f320cbbbbbcb141944aae80bd77d0de62ac1fb4b341313e",
+      "size_bytes": 71391
+    },
+    {
+      "relative_path": "modules/dataset_tools/metadata/aligned_Global_locations.txt",
+      "path": "/home/aman/Moedal/MoEDAL-ML-ANA/modules/dataset_tools/metadata/aligned_Global_locations.txt",
+      "sha256": "9adf30f3d6ca94510d2976a128201d42ad1058b8f1b1c7d488cb621ccd179748",
+      "size_bytes": 127339
+    },
+    {
+      "relative_path": "modules/dataset_tools/metadata/all_aligned_Global_locations.txt",
+      "path": "/home/aman/Moedal/MoEDAL-ML-ANA/modules/dataset_tools/metadata/all_aligned_Global_locations.txt",
+      "sha256": "1e02bd13368e5db2ee768ad3dcad307e3ed87e3cfb919d55c7f33be06870e369",
+      "size_bytes": 254575
+    },
+    {
+      "relative_path": "clean_pit_id_registries/paperV1.json",
+      "path": "/home/aman/Moedal/MoEDAL-ML-ANA/clean_pit_id_registries/paperV1.json",
+      "sha256": "0a327a731b7233d17adaf3b91d126d5fd4c3ec46dcd7f3796ef3b374a9ef6beb",
+      "size_bytes": 56066
+    }
+  ],
+  "status": "complete",
+  "started_epoch": 1793587601.044811,
+  "completed_stages": [
+    "preprocessed_prediction_coordinates",
+    "compare clean truth lists",
+    "build aligned clean truth with stable IDs",
+    "align CNN front/back",
+    "align FCN front/back",
+    "align DCC front/back",
+    "evaluate CNN front",
+    "evaluate CNN back",
+    "evaluate CNN aligned",
+    "evaluate FCN front",
+    "evaluate FCN back",
+    "evaluate FCN aligned",
+    "evaluate DCC front",
+    "evaluate DCC back",
+    "evaluate DCC aligned",
+    "assign run-specific false-positive IDs",
+    "pipeline_summary",
+    "CNN spatial resolution",
+    "FCN spatial resolution",
+    "DCC spatial resolution",
+    "gallery"
+  ],
+  "starting_point": {
+    "requested": "preprocessed_predicted_coordinates",
+    "input_source": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/paperV1_baseline",
+    "methods": {
+      "CNN": {
+        "actual": "preprocessed_predicted_coordinates",
+        "auxiliary_results": [
+          "predicted_etch_pits/CNN/GXY_allchan_008thresh_eval.txt",
+          "predicted_etch_pits/CNN/IXY_allchan_008thresh.txt",
+          "predicted_etch_pits/CNN/IXY_allchan_008thresh_eval.txt"
+        ]
+      },
+      "FCN": {
+        "actual": "preprocessed_predicted_coordinates"
+      },
+      "DCC": {
+        "actual": "preprocessed_predicted_coordinates",
+        "provenance_file": "predicted_etch_pits/DCC/conversion_metadata.json",
+        "warning_note": "DCC_HISTORICAL_OFFSET_WARNING.md",
+        "suitable_for_future_analysis": false
+      }
+    }
+  },
+  "completed_epoch": 1793588771.8160503
+}

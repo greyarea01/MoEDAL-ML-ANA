@@ -113,7 +113,7 @@ pr = unet.predict(dirty_test)
 for j in range(249):
     display([dirty_test[j, :, :, 8], clean_test[j, :, :, 0], pr[j, :, :, 0]])
 
-unet.save("model/unet")
+unet.save("models/FCN/unet")
 np.save("/content/drive/My Drive/MoEDAL/final/model/unet_predict", pr)
 #np.save("/content/drive/My Drive/MoEDAL/final/model/unet_testclean", clean_test)
 #np.save("/content/drive/My Drive/MoEDAL/final/model/unet_testdirty", dirty_test)

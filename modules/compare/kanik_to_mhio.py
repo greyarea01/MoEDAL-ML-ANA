@@ -7,7 +7,11 @@ import json
 from pathlib import Path
 
 from modules.dataset_tools import coordinates, mhio
-from modules.pipeline_paths import activate_pipeline_run, sha256_file, source_path
+from modules.pipeline_paths import (
+    activate_pipeline_run,
+    resolve_pipeline_path,
+    sha256_file,
+)
 
 
 def _load_local_centroids(path: Path, edge_threshold: int) -> list[list[float]]:
@@ -57,15 +61,15 @@ def _to_global(
 
 def convert_dcc_predictions(
     *,
-    front_source: str = "kanik/og_data/DirtyTestCentroid.txt",
-    back_source: str = "kanik/og_data/DirtyTestReverseCentroid.txt",
+    front_source: str = "model_outputs/DCC/DirtyTestCentroid.txt",
+    back_source: str = "model_outputs/DCC/DirtyTestReverseCentroid.txt",
     edge_threshold: int = 4,
 ) -> dict:
     """Convert both DCC sides and save them under the active run."""
     if not 0 <= edge_threshold < 240:
         raise ValueError("edge_threshold must be between 0 and 239 pixels")
-    front_path = source_path(front_source)
-    back_path = source_path(back_source)
+    front_path = resolve_pipeline_path(front_source, must_exist=True)
+    back_path = resolve_pipeline_path(back_source, must_exist=True)
     front_local = _load_local_centroids(front_path, edge_threshold)
     back_local = _load_local_centroids(back_path, edge_threshold)
     front_global = _to_global(front_local, side="front")
@@ -85,8 +89,20 @@ def convert_dcc_predictions(
             "count": len(back_global),
         },
         "mapping": {
-            "front": {"system": "d_to_c1", "flipped": False, "reverse": False},
-            "back": {"system": "dr_to_c1", "flipped": True, "reverse": True},
+            "front": {
+                "system": "d_to_c1",
+                "preset": "dc",
+                "offset": list(coordinates.Coord_system.offset["dc"]),
+                "flipped": False,
+                "reverse": False,
+            },
+            "back": {
+                "system": "dr_to_c1",
+                "preset": "drc",
+                "offset": list(coordinates.Coord_system.offset["drc"]),
+                "flipped": True,
+                "reverse": True,
+            },
         },
     }
     mhio.save_json(report, "predicted_etch_pits/DCC/conversion_metadata.json")
@@ -96,9 +112,11 @@ def convert_dcc_predictions(
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", required=True)
-    parser.add_argument("--front-source", default="kanik/og_data/DirtyTestCentroid.txt")
     parser.add_argument(
-        "--back-source", default="kanik/og_data/DirtyTestReverseCentroid.txt"
+        "--front-source", default="model_outputs/DCC/DirtyTestCentroid.txt"
+    )
+    parser.add_argument(
+        "--back-source", default="model_outputs/DCC/DirtyTestReverseCentroid.txt"
     )
     parser.add_argument("--edge-threshold", type=int, default=4)
     return parser.parse_args()

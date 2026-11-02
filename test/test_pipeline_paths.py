@@ -9,6 +9,7 @@ from modules.pipeline_paths import (
     RUN_DIR_ENV,
     RUN_MANIFEST,
     artifact_path,
+    copy_source_artifact,
     create_pipeline_run,
     record_source_inputs,
     resolve_pipeline_path,
@@ -54,6 +55,22 @@ class PipelinePathTests(unittest.TestCase):
         manifest = json.loads((run / RUN_MANIFEST).read_text(encoding="utf-8"))
         self.assertEqual(manifest["seeded_artifacts"][0]["sha256"], sha256_file(source_file))
 
+    def test_source_can_be_copied_to_a_named_run_artifact(self):
+        source = self.root / "raw_front.txt"
+        source.write_text("raw model output\n", encoding="utf-8")
+        run = create_pipeline_run(self.root / "run")
+
+        destination = copy_source_artifact(
+            source, "model_outputs/DCC/DirtyTestCentroid.txt"
+        )
+
+        self.assertEqual(
+            destination, run / "model_outputs/DCC/DirtyTestCentroid.txt"
+        )
+        self.assertEqual(destination.read_bytes(), source.read_bytes())
+        manifest = json.loads((run / RUN_MANIFEST).read_text(encoding="utf-8"))
+        self.assertEqual(manifest["seeded_artifacts"][0]["source"], str(source))
+
     def test_mhio_routes_generated_json_to_run(self):
         run = create_pipeline_run(self.root / "run")
         mhio.save_json([[3, 4]], "Aligned_clean.txt")
@@ -64,10 +81,11 @@ class PipelinePathTests(unittest.TestCase):
         from modules.pipeline_paths import PROJECT_ROOT
 
         run = create_pipeline_run(self.root / "run")
-        [record] = record_source_inputs(["kanik/clean_aligned.txt"])
+        relative = "modules/dataset_tools/metadata/Image_location_metadata.txt"
+        [record] = record_source_inputs([relative])
         manifest = json.loads((run / RUN_MANIFEST).read_text(encoding="utf-8"))
         self.assertEqual(
-            record["sha256"], sha256_file(PROJECT_ROOT / "kanik/clean_aligned.txt")
+            record["sha256"], sha256_file(PROJECT_ROOT / relative)
         )
         self.assertEqual(manifest["source_inputs"], [record])
 
@@ -78,9 +96,20 @@ class PipelinePathTests(unittest.TestCase):
     def test_static_inputs_remain_readable_without_a_run(self):
         from modules.pipeline_paths import PROJECT_ROOT
 
+        relative = "modules/dataset_tools/metadata/Image_location_metadata.txt"
+        self.assertEqual(
+            resolve_pipeline_path(relative, must_exist=True),
+            PROJECT_ROOT / relative,
+        )
+
+    def test_archived_kanik_inputs_are_read_from_active_run(self):
+        run = create_pipeline_run(self.root / "run")
+        archived = artifact_path("kanik/clean_aligned.txt", for_write=True)
+        archived.write_text("[]\n", encoding="utf-8")
+
         self.assertEqual(
             resolve_pipeline_path("kanik/clean_aligned.txt", must_exist=True),
-            PROJECT_ROOT / "kanik/clean_aligned.txt",
+            run / "kanik/clean_aligned.txt",
         )
 
     def test_run_cannot_be_nested_in_legacy_results(self):

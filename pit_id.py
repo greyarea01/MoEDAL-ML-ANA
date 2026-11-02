@@ -6,16 +6,16 @@ from collections import defaultdict
 
 import numpy as np
 
+from modules.clean_pit_registry import validate_clean_id_records
 from modules.dataset_tools import coordinates, mhio
 
 
 def generate_pit_ids(tolerance: float = 15) -> dict[str, int]:
-    """Generate all ID lists inside the active pipeline run."""
-    common_list = mhio.load_json("Aligned_clean.txt")
-    common_list_with_ids = [
-        {"id": f"C{idx:04d}", "coordinate": coord}
-        for idx, coord in enumerate(common_list)
-    ]
+    """Generate run-specific false-positive IDs without recalculating clean IDs."""
+    common_list_with_ids = validate_clean_id_records(
+        mhio.load_json("predicted_list/ids/Aligned_clean_with_ids.txt"),
+        context="active clean truth",
+    )
     false_pos_fcn = mhio.load_json(
         "predicted_list/FCN/aligned/final_false_pos.txt"
     )
@@ -86,8 +86,6 @@ def generate_pit_ids(tolerance: float = 15) -> dict[str, int]:
     mhio.save_json(common_fpd, "predicted_list/ids/FP_DCC_common_FCN_with_ids.txt")
     mhio.save_json(unique_fcn, "predicted_list/ids/FP_unique_FCN_with_ids.txt")
     mhio.save_json(unique_dcc, "predicted_list/ids/FP_unique_DCC_with_ids.txt")
-    mhio.save_json(common_list_with_ids, "predicted_list/ids/Aligned_clean_with_ids.txt")
-
     summary = {
         "clean": len(common_list_with_ids),
         "fcn_common": len(common_fpf),

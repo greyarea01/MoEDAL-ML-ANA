@@ -6,32 +6,68 @@ legacy internal layout (`predicted_etch_pits/`, `predicted_list/`, `plots/`,
 `gallery/`, `my_panels/`, `stitched_images/`, and generated NumPy masks), so a
 complete result can be moved or archived as one unit.
 
-For an exact downstream rerun using the committed coordinate predictions:
+The pipeline has three explicit scientific starting points. CNN is always
+seeded from its two preprocessed front/back coordinate files plus the three
+supporting result files
+`GXY_allchan_008thresh_eval.txt`, `IXY_allchan_008thresh.txt`, and
+`IXY_allchan_008thresh_eval.txt` under `predicted_etch_pits/CNN/`. To begin
+from all six already preprocessed CNN/FCN/DCC front/back coordinate files:
 
 ```bash
 python run_pipeline.py \
-  --run-dir pipeline_runs/2026-10-29_baseline \
-  --prediction-mode seed \
-  --prediction-source pipeline_runs/2026-11-01_phase1_bytecheck
+  --run-dir pipeline_runs/NEW_COORDINATE_RUN \
+  --start-from preprocessed_predicted_coordinates \
+  --input-source pipeline_runs/paperV1_baseline \
+  --clean-id-registry clean_pit_id_registries/paperV1.json
 ```
 
-To begin with U-Net inference, supply the selected post-processing parameters
-explicitly; the command intentionally has no hidden defaults for them:
+Every input source must also contain a complete archived `kanik/` directory.
+The whole tree is copied into each new run before analysis, including the clean
+truth inputs, raw DCC centroid outputs, and historical result files.
+
+To begin from stored FCN probability maps and Kanik's raw DCC centroid outputs,
+the input source must contain `model_outputs/FCN/front_probability_masks.npy`
+and `back_probability_masks.npy`. DCC raw outputs are copied from the input
+source's archived `kanik/og_data/` directory and converted with the current
+coordinate presets and the retained four-pixel image-edge cut:
+
+```bash
+python run_pipeline.py \
+  --run-dir pipeline_runs/2026-10-29_model_output \
+  --start-from model_output \
+  --input-source INPUT_ROOT \
+  --clean-id-registry clean_pit_id_registries/paperV1.json \
+  --front-threshold FRONT --back-threshold BACK \
+  --sigma SIGMA --alpha ALPHA --beta BETA
+```
+
+To begin with the FCN model, supply the same reconstruction parameters
+explicitly. FCN probability maps are generated below `model_outputs/FCN/`.
+Until a DCC model runner is added, DCC deliberately falls back to its copied
+raw Kanik model outputs and records that fallback in the run manifest:
 
 ```bash
 python run_pipeline.py \
   --run-dir pipeline_runs/2026-10-29_unet \
-  --prediction-mode unet \
-  --prediction-source pipeline_runs/2026-11-01_phase1_bytecheck \
+  --start-from model \
+  --input-source CNN_COORDINATE_SOURCE \
+  --clean-id-registry clean_pit_id_registries/paperV1.json \
   --front-threshold FRONT \
   --back-threshold BACK \
   --sigma SIGMA --alpha ALPHA --beta BETA \
   --require-gpu
 ```
 
-Spatial-resolution plots are part of the default analysis but can be skipped.
-The deprecated efficiency/purity curves, full gallery, and selected example
-panels are opt-in stages. Run `python run_pipeline.py --help` for the switches.
+Spatial-resolution plots, the full clean-pit/false-positive gallery, and the
+selected manuscript example panels are part of the default pipeline. Each can
+be skipped explicitly. The deprecated efficiency/purity curves remain opt-in.
+Run `python run_pipeline.py --help` for the switches.
+
+Every analysis explicitly selects an immutable clean-pit ID registry. Optional
+ID-preserving truth cuts can be added by repeating, for example,
+`--fiducial-cut-file fiducial_cuts/analysis_v2.json`. Registry and cut-file
+paths and hashes are recorded in the run manifest. Active and excluded truth
+records retain their registry IDs inside the run.
 
 ```python
 from modules.pipeline_paths import create_pipeline_run, seed_artifacts
@@ -44,26 +80,32 @@ seed_artifacts([
     "predicted_etch_pits/FCN/final_reverse_pr.txt",
     "predicted_etch_pits/DCC/final_pr.txt",
     "predicted_etch_pits/DCC/final_reverse_pr.txt",
+    "predicted_etch_pits/CNN/GXY_allchan_008thresh_eval.txt",
+    "predicted_etch_pits/CNN/IXY_allchan_008thresh.txt",
+    "predicted_etch_pits/CNN/IXY_allchan_008thresh_eval.txt",
 ])
 ```
 
 Every run contains `pipeline_run.json`, including creation metadata and hashes
-for copied starting predictions and immutable truth/coordinate inputs. Creating a run refuses any existing path;
-writing an existing artifact also fails. Choose a new run name for every rerun.
-The downstream runner also writes `pipeline_summary.json` with the TP, FP, FN,
-prediction, and fragment counts for every method and view.
+for copied starting predictions and immutable truth/coordinate inputs. Creating
+a run refuses any existing path; writing an existing artifact also fails.
+Choose a new run name for every rerun. The downstream runner also writes
+`pipeline_summary.json` with the TP, FP, FN, prediction, and fragment counts
+for every method and view.
 
 Static inputs stay outside the run and are never modified:
 
-- `model/`
+- `models/`
 - `numpy_data_eval/preprocessed_*.npy`
 - `modules/dataset_tools/metadata/`
-- `kanik/og_data/` and the checked clean-coordinate inputs
+- `clean_pit_id_registries/`
+- `fiducial_cuts/`
+
+The former root-level `kanik/` tree is archived inside pipeline runs and is
+carried forward from the explicitly selected `--input-source`.
 
 The `etch_pit_angle_survey/` tree is outside this refactor.
 
-The verified Phase-1 reference run is local at
-`pipeline_runs/2026-11-01_phase1_bytecheck`. Its 118 copied/generated artifacts
-were byte-identical to the former root-level files before those redundant files
-were removed. Because `pipeline_runs/` is intentionally ignored, preserve or
-archive that directory before cleaning the working copy.
+`pipeline_runs/paperV1_baseline` is explicitly recorded as a
+`preprocessed_predicted_coordinates` start. It retains all six CNN/FCN/DCC
+front/back coordinate inputs and the three supporting CNN result files.

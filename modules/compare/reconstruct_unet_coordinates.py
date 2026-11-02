@@ -100,10 +100,10 @@ def reconstruct_unet_coordinates(
         raise ValueError("alpha and beta must be nonnegative")
 
     front_path = artifact_path(
-        "probability_masks/front_probability_masks.npy", must_exist=True
+        "model_outputs/FCN/front_probability_masks.npy", must_exist=True
     )
     back_path = artifact_path(
-        "probability_masks/back_probability_masks.npy", must_exist=True
+        "model_outputs/FCN/back_probability_masks.npy", must_exist=True
     )
     front_maps = np.load(front_path, mmap_mode="r", allow_pickle=False)
     back_maps = np.load(back_path, mmap_mode="r", allow_pickle=False)

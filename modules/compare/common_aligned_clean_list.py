@@ -1,8 +1,23 @@
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+from modules.clean_pit_registry import (
+    save_clean_truth_selection,
+    select_clean_truth,
+)
 from modules.dataset_tools import mhio, coordinates
 
 CS = coordinates.Coord_system()
 
-def clean_common_aligned(threshold=4):
+
+def clean_common_aligned(
+    threshold: int = 4,
+    *,
+    clean_id_registry: str | Path,
+    fiducial_cut_files: tuple[str | Path, ...] = (),
+):
     """
     Filters the common etch pit list based on a threshold, removing pits
     that are outside of the defined x and y coordinate limits.
@@ -36,10 +51,33 @@ def clean_common_aligned(threshold=4):
         mask.append(common[i][:])  # Append valid pits to the mask
 
     common = mask  # Update the common pit list with filtered results
-    print(f"Number of valid common pits: {len(common)}")
+    selection = select_clean_truth(
+        common,
+        registry_path=clean_id_registry,
+        fiducial_cut_files=fiducial_cut_files,
+    )
+    save_clean_truth_selection(selection)
+    print(
+        "Clean truth: "
+        f"{selection['active_count']} active, "
+        f"{selection['excluded_count']} excluded, "
+        f"{selection['registry_count']} registered"
+    )
+    return selection
 
-    # Save the filtered common pit list to a JSON file
-    mhio.save_json(common, "Aligned_clean.txt")
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--clean-id-registry", required=True)
+    parser.add_argument("--fiducial-cut-file", action="append", default=[])
+    parser.add_argument("--threshold", type=int, default=4)
+    return parser.parse_args()
+
 
 if __name__ == "__main__":
-    clean_common_aligned()
+    args = _parse_args()
+    clean_common_aligned(
+        threshold=args.threshold,
+        clean_id_registry=args.clean_id_registry,
+        fiducial_cut_files=tuple(args.fiducial_cut_file),
+    )

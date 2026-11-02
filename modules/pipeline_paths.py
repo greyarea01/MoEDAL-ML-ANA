@@ -25,7 +25,9 @@ RUN_MANIFEST = "pipeline_run.json"
 ARTIFACT_DIRECTORIES = frozenset(
     {
         "gallery",
+        "kanik",
         "MLout",
+        "model_outputs",
         "my_panels",
         "plots",
         "predicted_etch_pits",
@@ -60,9 +62,7 @@ def _is_pipeline_artifact(path: Path) -> bool:
         return True
     if path.parts[0] == "numpy_data_eval" and path.name.startswith("final_"):
         return True
-    if path.parts[:2] == ("kanik", "results"):
-        return True
-    return path.as_posix() == "kanik/final_reverse_pr.txt"
+    return False
 
 
 def sha256_file(path: str | os.PathLike[str], chunk_size: int = 8 * 1024 * 1024) -> str:
@@ -112,7 +112,7 @@ def create_pipeline_run(
     if root in forbidden:
         raise ValueError(f"Unsafe pipeline run directory: {root}")
     legacy_roots = [PROJECT_ROOT / name for name in ARTIFACT_DIRECTORIES]
-    legacy_roots.extend(PROJECT_ROOT / name for name in ("kanik", "numpy_data_eval"))
+    legacy_roots.append(PROJECT_ROOT / "numpy_data_eval")
     if any(legacy == root or legacy in root.parents for legacy in legacy_roots):
         raise ValueError(
             f"A run cannot be nested inside a legacy data/result directory: {root}"
@@ -298,6 +298,36 @@ def seed_artifacts(
     temporary.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     os.replace(temporary, manifest_path)
     return destinations
+
+
+def copy_source_artifact(
+    source_pathname: str | os.PathLike[str],
+    destination_relative_path: str | os.PathLike[str],
+) -> Path:
+    """Copy one immutable source to a differently named run artifact."""
+    source = source_path(source_pathname)
+    if not source.is_file():
+        raise FileNotFoundError(f"Seed source is not a file: {source}")
+    relative = _validate_relative(destination_relative_path)
+    destination = artifact_path(relative, for_write=True)
+    shutil.copy2(source, destination)
+    digest = sha256_file(destination)
+
+    manifest_path = active_run_root() / RUN_MANIFEST
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["seeded_artifacts"].append(
+        {
+            "relative_path": relative.as_posix(),
+            "source": str(source),
+            "destination": str(destination),
+            "sha256": digest,
+            "size_bytes": destination.stat().st_size,
+        }
+    )
+    temporary = manifest_path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    os.replace(temporary, manifest_path)
+    return destination
 
 
 def record_source_inputs(

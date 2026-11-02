@@ -83,7 +83,7 @@ def _predict_dataset(model, source: Path, destination: Path, batch_size: int) ->
 
 def generate_probability_masks(
     *,
-    model_path: str | os.PathLike[str] = "model/unet_ROC.keras",
+    model_path: str | os.PathLike[str] = "models/FCN/unet_ROC.keras",
     front_input: str | os.PathLike[str] = "numpy_data_eval/preprocessed_dirty_eval.npy",
     back_input: str | os.PathLike[str] = "numpy_data_eval/preprocessed_dirty_reverse_eval.npy",
     batch_size: int = 4,
@@ -97,13 +97,13 @@ def generate_probability_masks(
     front_file = source_path(front_input)
     back_file = source_path(back_input)
     front_output = artifact_path(
-        "probability_masks/front_probability_masks.npy", for_write=True
+        "model_outputs/FCN/front_probability_masks.npy", for_write=True
     )
     back_output = artifact_path(
-        "probability_masks/back_probability_masks.npy", for_write=True
+        "model_outputs/FCN/back_probability_masks.npy", for_write=True
     )
     metadata_output = artifact_path(
-        "probability_masks/generation_metadata.json", for_write=True
+        "model_outputs/FCN/generation_metadata.json", for_write=True
     )
 
     import tensorflow as tf
@@ -145,7 +145,7 @@ def generate_probability_masks(
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", required=True)
-    parser.add_argument("--model", default="model/unet_ROC.keras")
+    parser.add_argument("--model", default="models/FCN/unet_ROC.keras")
     parser.add_argument("--front-input", default="numpy_data_eval/preprocessed_dirty_eval.npy")
     parser.add_argument("--back-input", default="numpy_data_eval/preprocessed_dirty_reverse_eval.npy")
     parser.add_argument("--batch-size", type=int, default=4)

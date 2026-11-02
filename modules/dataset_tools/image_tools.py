@@ -1,5 +1,4 @@
 #from PIL import Image
-import tensorflow as tf
 import matplotlib.pyplot as plt
 # I have added mplot imaging // LM
 import matplotlib.image as mpimg

@@ -11,26 +11,29 @@ from pathlib import Path
 
 os.environ.setdefault("MPLBACKEND", "Agg")
 
+from modules.clean_pit_registry import validate_clean_truth_configuration  # noqa: E402
+from modules.pipeline_start import (  # noqa: E402
+    CNN_AUXILIARY_ARTIFACTS,
+    FCN_BACK_MODEL_OUTPUT,
+    FCN_FRONT_MODEL_OUTPUT,
+    DCC_BACK_KANIK_OUTPUT,
+    DCC_FRONT_KANIK_OUTPUT,
+    STARTING_POINTS,
+    resolve_input_source,
+    seed_cnn_prediction_coordinates,
+    seed_dcc_model_outputs,
+    seed_fcn_model_outputs,
+    seed_kanik_archive,
+    seed_preprocessed_prediction_coordinates,
+    validate_starting_point_inputs,
+)
 from modules.pipeline_paths import (  # noqa: E402
-    PROJECT_ROOT,
     RUN_MANIFEST,
     active_run_root,
     artifact_path,
     create_pipeline_run,
     record_source_inputs,
-    seed_artifacts,
 )
-
-
-PREDICTION_ARTIFACTS = [
-    f"predicted_etch_pits/{method}/{side}.txt"
-    for method in ("CNN", "FCN", "DCC")
-    for side in ("final_pr", "final_reverse_pr")
-]
-CNN_PREDICTION_ARTIFACTS = [
-    "predicted_etch_pits/CNN/final_pr.txt",
-    "predicted_etch_pits/CNN/final_reverse_pr.txt",
-]
 
 
 def _update_manifest(**values) -> None:
@@ -42,14 +45,15 @@ def _update_manifest(**values) -> None:
     os.replace(temporary, manifest_path)
 
 
-def _run_stage(name, function) -> None:
+def _run_stage(name, function) -> object:
     import matplotlib.pyplot as plt
 
     print(f"\n=== {name} ===", flush=True)
     started = time.time()
-    function()
+    result = function()
     plt.close("all")
     print(f"=== {name} complete ({time.time() - started:.1f} s) ===", flush=True)
+    return result
 
 
 def _configure_plot_style() -> None:
@@ -96,17 +100,48 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", required=True, help="New, non-existing run directory")
     parser.add_argument(
-        "--prediction-mode",
-        choices=("seed", "unet"),
-        default="seed",
-        help="Copy existing coordinate predictions or start from U-Net inference",
+        "--start-from",
+        choices=STARTING_POINTS,
+        required=True,
+        help="Scientific stage at which FCN/DCC processing begins",
     )
     parser.add_argument(
-        "--prediction-source",
+        "--input-source",
         required=True,
-        help="Root containing existing prediction artifacts used by seed mode",
+        help="Root containing CNN coordinates and selected FCN/DCC starting inputs",
     )
-    parser.add_argument("--model", default="model/unet_ROC.keras")
+    parser.add_argument(
+        "--clean-id-registry",
+        required=True,
+        help="Explicit clean-pit ID registry selected for this analysis",
+    )
+    parser.add_argument(
+        "--fiducial-cut-file",
+        action="append",
+        default=[],
+        help="Optional ID-preserving clean-truth cut file; may be repeated",
+    )
+    parser.add_argument("--model", default="models/FCN/unet_ROC.keras")
+    parser.add_argument(
+        "--fcn-front-model-output",
+        default=FCN_FRONT_MODEL_OUTPUT,
+        help="FCN front probability map path relative to --input-source",
+    )
+    parser.add_argument(
+        "--fcn-back-model-output",
+        default=FCN_BACK_MODEL_OUTPUT,
+        help="FCN back probability map path relative to --input-source",
+    )
+    parser.add_argument(
+        "--dcc-front-model-output",
+        default=DCC_FRONT_KANIK_OUTPUT,
+        help="Kanik/DCC raw front centroid output relative to --input-source",
+    )
+    parser.add_argument(
+        "--dcc-back-model-output",
+        default=DCC_BACK_KANIK_OUTPUT,
+        help="Kanik/DCC raw reverse centroid output relative to --input-source",
+    )
     parser.add_argument("--front-images", default="numpy_data_eval/preprocessed_dirty_eval.npy")
     parser.add_argument(
         "--back-images", default="numpy_data_eval/preprocessed_dirty_reverse_eval.npy"
@@ -124,23 +159,49 @@ def _parse_args() -> argparse.Namespace:
         help="Skip the spatial-resolution plots included in the main analysis",
     )
     parser.add_argument("--include-legacy-curves", action="store_true")
-    parser.add_argument("--generate-gallery", action="store_true")
-    parser.add_argument("--generate-example-panels", action="store_true")
+    parser.add_argument(
+        "--skip-gallery",
+        action="store_true",
+        help="Skip the full clean-pit and false-positive panel gallery",
+    )
+    parser.add_argument(
+        "--skip-example-panels",
+        action="store_true",
+        help="Skip the selected manuscript example panels",
+    )
     return parser.parse_args()
 
 
-def _validate_unet_parameters(args: argparse.Namespace) -> None:
+def _validate_reconstruction_parameters(args: argparse.Namespace) -> None:
+    if args.start_from == "preprocessed_predicted_coordinates":
+        return
     required = ("front_threshold", "back_threshold", "sigma", "alpha", "beta")
     missing = [name for name in required if getattr(args, name) is None]
     if missing:
         options = ", ".join("--" + name.replace("_", "-") for name in missing)
-        raise ValueError(f"U-Net mode requires explicit parameters: {options}")
+        raise ValueError(
+            f"{args.start_from} requires explicit FCN reconstruction parameters: "
+            f"{options}"
+        )
 
 
 def main() -> None:
     args = _parse_args()
-    if args.prediction_mode == "unet":
-        _validate_unet_parameters(args)
+    _validate_reconstruction_parameters(args)
+    validate_clean_truth_configuration(
+        args.clean_id_registry, tuple(args.fiducial_cut_file)
+    )
+    validate_starting_point_inputs(
+        start_from=args.start_from,
+        input_source=args.input_source,
+        fcn_front_model_output=args.fcn_front_model_output,
+        fcn_back_model_output=args.fcn_back_model_output,
+        model_path=args.model,
+        front_images=args.front_images,
+        back_images=args.back_images,
+        dcc_front_model_output=args.dcc_front_model_output,
+        dcc_back_model_output=args.dcc_back_model_output,
+    )
 
     _configure_plot_style()
 
@@ -153,44 +214,108 @@ def main() -> None:
     )
     record_source_inputs(
         [
-            "kanik/clean_aligned.txt",
             "modules/dataset_tools/metadata/Image_location_metadata.txt",
             "modules/dataset_tools/metadata/aligned_Global_locations.txt",
             "modules/dataset_tools/metadata/all_aligned_Global_locations.txt",
+            args.clean_id_registry,
+            *args.fiducial_cut_file,
         ]
     )
-    _update_manifest(status="running", started_epoch=time.time(), completed_stages=[])
+    dcc_actual_start = (
+        "model_output" if args.start_from == "model" else args.start_from
+    )
+    starting_point = {
+        "requested": args.start_from,
+        "input_source": str(resolve_input_source(args.input_source)),
+        "methods": {
+            "CNN": {
+                "actual": "preprocessed_predicted_coordinates",
+                "auxiliary_results": CNN_AUXILIARY_ARTIFACTS,
+            },
+            "FCN": {"actual": args.start_from},
+            "DCC": {"actual": dcc_actual_start},
+        },
+    }
+    if args.start_from == "model":
+        starting_point["methods"]["DCC"]["fallback"] = (
+            "DCC model integration is not available; starting from Kanik's raw "
+            "model output instead"
+        )
+    if args.start_from != "preprocessed_predicted_coordinates":
+        starting_point["methods"]["DCC"]["processing"] = {
+            "edge_threshold_pixels": 4,
+            "coordinate_configuration": "current repository presets",
+        }
+    _update_manifest(
+        status="running",
+        started_epoch=time.time(),
+        completed_stages=[],
+        starting_point=starting_point,
+    )
 
     completed = []
     try:
-        if args.prediction_mode == "seed":
+        _run_stage(
+            "copy complete archived Kanik tree",
+            lambda: seed_kanik_archive(args.input_source),
+        )
+        completed.append("kanik_archive")
+        if args.start_from == "preprocessed_predicted_coordinates":
             _run_stage(
-                "seed coordinate predictions",
-                lambda: seed_artifacts(
-                    PREDICTION_ARTIFACTS, source_root=args.prediction_source
-                ),
+                "copy preprocessed coordinates and auxiliary CNN results",
+                lambda: seed_preprocessed_prediction_coordinates(args.input_source),
             )
-            completed.append("seed_predictions")
+            completed.append("preprocessed_prediction_coordinates")
         else:
             from modules.compare.kanik_to_mhio import convert_dcc_predictions
-            from modules.compare.predict_from_model import generate_probability_masks
             from modules.compare.reconstruct_unet_coordinates import (
                 reconstruct_unet_coordinates,
             )
 
             _run_stage(
-                "U-Net probability masks",
-                lambda: generate_probability_masks(
-                    model_path=args.model,
-                    front_input=args.front_images,
-                    back_input=args.back_images,
-                    batch_size=args.batch_size,
-                    require_gpu=args.require_gpu,
+                "copy CNN coordinates and auxiliary results",
+                lambda: seed_cnn_prediction_coordinates(args.input_source),
+            )
+            completed.append("cnn_coordinates")
+            dcc_outputs = _run_stage(
+                "copy Kanik/DCC model outputs",
+                lambda: seed_dcc_model_outputs(
+                    args.input_source,
+                    front_relative_path=args.dcc_front_model_output,
+                    back_relative_path=args.dcc_back_model_output,
                 ),
             )
-            completed.append("probability_masks")
+            completed.append("dcc_model_outputs")
+
+            if args.start_from == "model":
+                from modules.compare.predict_from_model import (
+                    generate_probability_masks,
+                )
+
+                _run_stage(
+                    "FCN model inference",
+                    lambda: generate_probability_masks(
+                        model_path=args.model,
+                        front_input=args.front_images,
+                        back_input=args.back_images,
+                        batch_size=args.batch_size,
+                        require_gpu=args.require_gpu,
+                    ),
+                )
+                completed.append("fcn_model_outputs")
+            else:
+                _run_stage(
+                    "copy FCN model outputs",
+                    lambda: seed_fcn_model_outputs(
+                        args.input_source,
+                        front_relative_path=args.fcn_front_model_output,
+                        back_relative_path=args.fcn_back_model_output,
+                    ),
+                )
+                completed.append("fcn_model_outputs")
+
             _run_stage(
-                "U-Net coordinate reconstruction",
+                "FCN preprocessed coordinate reconstruction",
                 lambda: reconstruct_unet_coordinates(
                     front_threshold=args.front_threshold,
                     back_threshold=args.back_threshold,
@@ -200,16 +325,15 @@ def main() -> None:
                 ),
             )
             completed.append("fcn_coordinates")
-            _run_stage("DCC coordinate conversion", convert_dcc_predictions)
-            completed.append("dcc_coordinates")
             _run_stage(
-                "seed CNN coordinate predictions",
-                lambda: seed_artifacts(
-                    CNN_PREDICTION_ARTIFACTS,
-                    source_root=args.prediction_source,
+                "DCC preprocessed coordinate conversion",
+                lambda: convert_dcc_predictions(
+                    front_source=dcc_outputs["front"],
+                    back_source=dcc_outputs["back"],
+                    edge_threshold=4,
                 ),
             )
-            completed.append("cnn_coordinates")
+            completed.append("dcc_coordinates")
 
         from modules.compare.common_aligned_clean_list import clean_common_aligned
         from modules.compare.compare_CNN_aligned import compare_CNN_aligned
@@ -229,7 +353,13 @@ def main() -> None:
 
         stages = [
             ("compare clean truth lists", compare_clean_aligned),
-            ("build aligned clean truth", clean_common_aligned),
+            (
+                "build aligned clean truth with stable IDs",
+                lambda: clean_common_aligned(
+                    clean_id_registry=args.clean_id_registry,
+                    fiducial_cut_files=tuple(args.fiducial_cut_file),
+                ),
+            ),
             ("align CNN front/back", compare_CNN_aligned),
             ("align FCN front/back", compare_FCN_aligned),
             ("align DCC front/back", compare_DCC_aligned),
@@ -242,7 +372,7 @@ def main() -> None:
             ("evaluate DCC front", evaluate_DCC_front),
             ("evaluate DCC back", evaluate_DCC_back),
             ("evaluate DCC aligned", evaluate_DCC_aligned),
-            ("assign pit IDs", generate_pit_ids),
+            ("assign run-specific false-positive IDs", generate_pit_ids),
         ]
         for name, function in stages:
             _run_stage(name, function)
@@ -284,12 +414,12 @@ def main() -> None:
                 _run_stage(name, function)
                 completed.append(name)
 
-        if args.generate_gallery:
+        if not args.skip_gallery:
             from gallery_generation import generate_gallery
 
             _run_stage("full gallery", generate_gallery)
             completed.append("gallery")
-        if args.generate_example_panels:
+        if not args.skip_example_panels:
             from generate_example_panels import generate_example_panels
 
             _run_stage("example panels", generate_example_panels)

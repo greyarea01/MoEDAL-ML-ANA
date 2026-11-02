@@ -8,6 +8,6 @@
 /TODO.md
 /my_panels/
 /stitched_images/
-/model/
+/models/
 /numpy_data_train/
-/pipeline_runs/
+/pipeline_runs/**/gallery/
