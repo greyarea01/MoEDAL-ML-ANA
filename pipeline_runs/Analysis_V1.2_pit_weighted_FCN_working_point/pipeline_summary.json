@@ -1,0 +1,73 @@
+{
+  "methods": {
+    "CNN": {
+      "front": {
+        "predictions": 1106,
+        "true_positives": 908,
+        "false_positives": 267,
+        "false_negatives": 324,
+        "fragments": 13
+      },
+      "back": {
+        "predictions": 1360,
+        "true_positives": 215,
+        "false_positives": 1165,
+        "false_negatives": 1017,
+        "fragments": 4
+      },
+      "aligned": {
+        "predictions": 798,
+        "true_positives": 714,
+        "false_positives": 140,
+        "false_negatives": 518,
+        "fragments": 6
+      }
+    },
+    "FCN": {
+      "front": {
+        "predictions": 1337,
+        "true_positives": 1175,
+        "false_positives": 191,
+        "false_negatives": 57,
+        "fragments": 12
+      },
+      "back": {
+        "predictions": 1290,
+        "true_positives": 1173,
+        "false_positives": 143,
+        "false_negatives": 59,
+        "fragments": 18
+      },
+      "aligned": {
+        "predictions": 1171,
+        "true_positives": 1171,
+        "false_positives": 30,
+        "false_negatives": 61,
+        "fragments": 10
+      }
+    },
+    "DCC": {
+      "front": {
+        "predictions": 1433,
+        "true_positives": 1114,
+        "false_positives": 343,
+        "false_negatives": 118,
+        "fragments": 11
+      },
+      "back": {
+        "predictions": 1464,
+        "true_positives": 1119,
+        "false_positives": 366,
+        "false_negatives": 113,
+        "fragments": 15
+      },
+      "aligned": {
+        "predictions": 1044,
+        "true_positives": 1052,
+        "false_positives": 16,
+        "false_negatives": 180,
+        "fragments": 6
+      }
+    }
+  }
+}

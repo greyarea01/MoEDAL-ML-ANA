@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "fiducial_region_file": "/home/aman/Moedal/MoEDAL-ML-ANA/fiducial_cuts/analysis_v2_regions.json",
+  "fiducial_region_sha256": "880a798f921df42f76dd4a7814ef7c5c5b617d6b1af3bb754703cad8ef21c757",
+  "methods": {
+    "CNN": {
+      "front": {
+        "source": "predicted_etch_pits/CNN/final_pr.txt",
+        "output": "predicted_etch_pits/CNN/fiducial_pr.txt",
+        "source_count": 2911,
+        "retained_count": 2664,
+        "removed_count": 247,
+        "removed_by_reason": {
+          "alignment_hole": 9,
+          "image_edge": 236,
+          "physical_inconsistency": 2
+        },
+        "edge_local_coordinate_provenance": "provided"
+      },
+      "back": {
+        "source": "predicted_etch_pits/CNN/final_reverse_pr.txt",
+        "output": "predicted_etch_pits/CNN/fiducial_reverse_pr.txt",
+        "source_count": 3054,
+        "retained_count": 3051,
+        "removed_count": 3,
+        "removed_by_reason": {
+          "alignment_hole": 2,
+          "image_edge": 1,
+          "physical_inconsistency": 0
+        },
+        "edge_local_coordinate_provenance": "inferred"
+      }
+    },
+    "FCN": {
+      "front": {
+        "source": "predicted_etch_pits/FCN/final_pr.txt",
+        "output": "predicted_etch_pits/FCN/fiducial_pr.txt",
+        "source_count": 1425,
+        "retained_count": 1409,
+        "removed_count": 16,
+        "removed_by_reason": {
+          "alignment_hole": 10,
+          "image_edge": 2,
+          "physical_inconsistency": 4
+        },
+        "edge_local_coordinate_provenance": "provided"
+      },
+      "back": {
+        "source": "predicted_etch_pits/FCN/final_reverse_pr.txt",
+        "output": "predicted_etch_pits/FCN/fiducial_reverse_pr.txt",
+        "source_count": 1334,
+        "retained_count": 1313,
+        "removed_count": 21,
+        "removed_by_reason": {
+          "alignment_hole": 11,
+          "image_edge": 2,
+          "physical_inconsistency": 8
+        },
+        "edge_local_coordinate_provenance": "provided"
+      }
+    },
+    "DCC": {
+      "front": {
+        "source": "predicted_etch_pits/DCC/final_pr.txt",
+        "output": "predicted_etch_pits/DCC/fiducial_pr.txt",
+        "source_count": 1531,
+        "retained_count": 1516,
+        "removed_count": 15,
+        "removed_by_reason": {
+          "alignment_hole": 4,
+          "image_edge": 0,
+          "physical_inconsistency": 11
+        },
+        "edge_local_coordinate_provenance": "provided"
+      },
+      "back": {
+        "source": "predicted_etch_pits/DCC/final_reverse_pr.txt",
+        "output": "predicted_etch_pits/DCC/fiducial_reverse_pr.txt",
+        "source_count": 1504,
+        "retained_count": 1488,
+        "removed_count": 16,
+        "removed_by_reason": {
+          "alignment_hole": 6,
+          "image_edge": 0,
+          "physical_inconsistency": 10
+        },
+        "edge_local_coordinate_provenance": "provided"
+      }
+    }
+  }
+}

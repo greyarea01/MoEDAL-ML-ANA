@@ -1,0 +1,62 @@
+{
+  "model_path": "/home/aman/Moedal/MoEDAL-ML-ANA/models/FCN/full_imbalance_pit_weighted/unet_pit_weighted_val_loss_selected.keras",
+  "model_sha256": "dcb2ee271160281324123f8c3c9b26637ebf2915844e1e0cb997df8324f5a128",
+  "tensorflow_version": "2.18.0",
+  "visible_gpus": [],
+  "batch_size": 4,
+  "native_model_output": "pit probability",
+  "stored_model_output": "background probability",
+  "invert_output": true,
+  "datasets": {
+    "front": {
+      "input_path": "/home/aman/Moedal/MoEDAL-ML-ANA/numpy_data_eval/preprocessed_dirty_eval.npy",
+      "input_shape": [
+        250,
+        480,
+        640,
+        10
+      ],
+      "input_dtype": "uint8",
+      "input_sha256": "658eb9aabc7eb9e373e839663991619eba9a669ba77ae4b95c2b5a23181054db",
+      "output_path": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/Analysis_V1.2_pit_weighted_FCN_working_point/model_outputs/FCN/front_probability_masks.npy",
+      "output_shape": [
+        250,
+        480,
+        640,
+        1
+      ],
+      "output_dtype": "float32",
+      "output_sha256": "42167854799455980bb9e99b74c31fa99b0c14fddb6a9e7204bb3da7b95ddac2",
+      "output_transform": "1 - native model output",
+      "probability_min": 4.869699478149414e-05,
+      "probability_max": 0.9999890327453613,
+      "probability_mean": 0.7333433856010632,
+      "elapsed_seconds": 19.76670265197754
+    },
+    "back": {
+      "input_path": "/home/aman/Moedal/MoEDAL-ML-ANA/numpy_data_eval/preprocessed_dirty_reverse_eval.npy",
+      "input_shape": [
+        250,
+        480,
+        640,
+        10
+      ],
+      "input_dtype": "uint8",
+      "input_sha256": "35a3670cae78a84302f5b662d300aa867fa05d656341ec61abbb84e3f3c5e04f",
+      "output_path": "/home/aman/Moedal/MoEDAL-ML-ANA/pipeline_runs/Analysis_V1.2_pit_weighted_FCN_working_point/model_outputs/FCN/back_probability_masks.npy",
+      "output_shape": [
+        250,
+        480,
+        640,
+        1
+      ],
+      "output_dtype": "float32",
+      "output_sha256": "a0dd8349c06e14377c3e585f78e4fb021f7c338646f6c936978ea20e51ba8f93",
+      "output_transform": "1 - native model output",
+      "probability_min": 4.166364669799805e-05,
+      "probability_max": 0.9999986290931702,
+      "probability_mean": 0.7353504161857441,
+      "elapsed_seconds": 17.432955503463745
+    }
+  }
+}

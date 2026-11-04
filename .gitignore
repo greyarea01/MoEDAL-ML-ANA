@@ -11,3 +11,4 @@
 /models/
 /numpy_data_train/
 /pipeline_runs/**/gallery/
+/pipeline_runs/**/model_outputs/FCN/*_probability_masks.npy
