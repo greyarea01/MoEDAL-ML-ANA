@@ -10,7 +10,7 @@ from modules.clean_pit_registry import validate_clean_id_records
 from modules.dataset_tools import coordinates, mhio
 
 
-def generate_pit_ids(tolerance: float = 15) -> dict[str, int]:
+def generate_pit_ids(tolerance: float = 12) -> dict[str, int]:
     """Generate run-specific false-positive IDs without recalculating clean IDs."""
     common_list_with_ids = validate_clean_id_records(
         mhio.load_json("predicted_list/ids/Aligned_clean_with_ids.txt"),
@@ -24,7 +24,7 @@ def generate_pit_ids(tolerance: float = 15) -> dict[str, int]:
     )
 
     overlap = coordinates.Overlap(false_pos_fcn, false_pos_dcc, tolerance)
-    overlap_pairs = np.where(overlap.dist < tolerance)
+    overlap_pairs = np.where(overlap.dist <= tolerance)
     common_ids_fcn = overlap_pairs[0]
     common_ids_dcc = overlap_pairs[1]
 

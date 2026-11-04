@@ -85,7 +85,7 @@ def evaluate_efficiency_purity_CNN():
         predicted_list_eval.append(predicted_list[i][:])
 
     # Calculate overlap between predicted and true pits
-    x = coordinates.Overlap(np.array(predicted_list_eval), np.array(true_eval), tolerance=15)
+    x = coordinates.Overlap(np.array(predicted_list_eval), np.array(true_eval), tolerance=12)
 
     # Calculate the nearest distances for all predicted and true pits
     nearest_distance_of_all_pred = x.closest_dist_a  # Distances from all predicted to true

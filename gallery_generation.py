@@ -15,11 +15,11 @@ def _nearby(predictions, coordinate, tolerance):
     return [
         predictions[index]
         for index, distance in enumerate(overlap.dist[:, 0])
-        if distance < tolerance
+        if distance <= tolerance
     ]
 
 
-def generate_gallery(tolerance: float = 15, crop_size: int = 56) -> dict[str, int]:
+def generate_gallery(tolerance: float = 12, crop_size: int = 56) -> dict[str, int]:
     """Write every gallery panel below ``gallery/56pixel`` in the active run."""
     clean_pits = mhio.load_json("predicted_list/ids/Aligned_clean_with_ids.txt")
     predicted_fcn = mhio.load_json(

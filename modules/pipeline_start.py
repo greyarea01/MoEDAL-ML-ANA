@@ -27,6 +27,10 @@ CNN_COORDINATE_ARTIFACTS = [
     "predicted_etch_pits/CNN/final_pr.txt",
     "predicted_etch_pits/CNN/final_reverse_pr.txt",
 ]
+FCN_COORDINATE_ARTIFACTS = [
+    "predicted_etch_pits/FCN/final_pr.txt",
+    "predicted_etch_pits/FCN/final_reverse_pr.txt",
+]
 CNN_AUXILIARY_ARTIFACTS = [
     "predicted_etch_pits/CNN/GXY_allchan_008thresh_eval.txt",
     "predicted_etch_pits/CNN/IXY_allchan_008thresh.txt",
@@ -178,6 +182,25 @@ def seed_cnn_prediction_coordinates(input_source: str | Path) -> dict:
         "source_root": str(root),
         "coordinate_artifacts": [str(path) for path in destinations[:2]],
         "auxiliary_artifacts": [str(path) for path in destinations[2:]],
+    }
+
+
+def seed_fcn_prediction_coordinates(input_source: str | Path) -> dict:
+    """Copy preprocessed FCN coordinates and any retained reconstruction provenance."""
+    root = resolve_input_source(input_source)
+    destinations = seed_artifacts(FCN_COORDINATE_ARTIFACTS, source_root=root)
+    optional = [
+        relative
+        for relative in OPTIONAL_COORDINATE_PROVENANCE_ARTIFACTS
+        if relative.startswith("predicted_etch_pits/FCN/")
+        and source_file_under(root, relative, required=False).is_file()
+    ]
+    if optional:
+        seed_artifacts(optional, source_root=root)
+    return {
+        "source_root": str(root),
+        "coordinate_artifacts": [str(path) for path in destinations],
+        "provenance_artifacts": optional,
     }
 
 

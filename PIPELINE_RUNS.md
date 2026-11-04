@@ -69,6 +69,14 @@ ID-preserving truth cuts can be added by repeating, for example,
 paths and hashes are recorded in the run manifest. Active and excluded truth
 records retain their registry IDs inside the run.
 
+Spatial cuts shared by predictions and clean truth are selected with, for
+example, `--spatial-fiducial-file fiducial_cuts/analysis_v2_regions.json`.
+They preserve the six raw preprocessed coordinate inputs and write separate
+fiducial-filtered inputs plus a complete removal audit inside the run.
+Analysis v2 additionally selects
+`--fiducial-cut-file fiducial_cuts/analysis_v2_truth_blacklist.json` to omit
+`C0123`, `C0300`, and `C0997` without changing the global clean-ID registry.
+
 ```python
 from modules.pipeline_paths import create_pipeline_run, seed_artifacts
 

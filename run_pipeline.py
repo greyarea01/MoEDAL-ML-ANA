@@ -22,6 +22,7 @@ from modules.pipeline_start import (  # noqa: E402
     resolve_input_source,
     seed_cnn_prediction_coordinates,
     seed_dcc_model_outputs,
+    seed_fcn_prediction_coordinates,
     seed_fcn_model_outputs,
     seed_kanik_archive,
     seed_preprocessed_prediction_coordinates,
@@ -121,6 +122,13 @@ def _parse_args() -> argparse.Namespace:
         default=[],
         help="Optional ID-preserving clean-truth cut file; may be repeated",
     )
+    parser.add_argument(
+        "--spatial-fiducial-file",
+        help=(
+            "Optional spatial regions applied to both predictions and registered "
+            "clean truth"
+        ),
+    )
     parser.add_argument("--model", default="models/FCN/unet_ROC.keras")
     parser.add_argument(
         "--fcn-front-model-output",
@@ -142,12 +150,29 @@ def _parse_args() -> argparse.Namespace:
         default=DCC_BACK_KANIK_OUTPUT,
         help="Kanik/DCC raw reverse centroid output relative to --input-source",
     )
+    parser.add_argument(
+        "--dcc-from-model-output",
+        action="store_true",
+        help=(
+            "With a preprocessed-coordinate start, regenerate DCC coordinates "
+            "from archived Kanik model output using current presets"
+        ),
+    )
     parser.add_argument("--front-images", default="numpy_data_eval/preprocessed_dirty_eval.npy")
     parser.add_argument(
         "--back-images", default="numpy_data_eval/preprocessed_dirty_reverse_eval.npy"
     )
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--require-gpu", action="store_true")
+    parser.add_argument(
+        "--invert-fcn-model-output",
+        action="store_true",
+        help=(
+            "Store 1 minus the FCN's native output before coordinate reconstruction; "
+            "required when a pit-positive model is used with the historical "
+            "background-probability extractor"
+        ),
+    )
     parser.add_argument("--front-threshold", type=float)
     parser.add_argument("--back-threshold", type=float)
     parser.add_argument("--sigma", type=float)
@@ -173,6 +198,14 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _validate_reconstruction_parameters(args: argparse.Namespace) -> None:
+    if (
+        args.dcc_from_model_output
+        and args.start_from != "preprocessed_predicted_coordinates"
+    ):
+        raise ValueError(
+            "--dcc-from-model-output is only valid with "
+            "--start-from preprocessed_predicted_coordinates"
+        )
     if args.start_from == "preprocessed_predicted_coordinates":
         return
     required = ("front_threshold", "back_threshold", "sigma", "alpha", "beta")
@@ -189,7 +222,9 @@ def main() -> None:
     args = _parse_args()
     _validate_reconstruction_parameters(args)
     validate_clean_truth_configuration(
-        args.clean_id_registry, tuple(args.fiducial_cut_file)
+        args.clean_id_registry,
+        tuple(args.fiducial_cut_file),
+        args.spatial_fiducial_file,
     )
     validate_starting_point_inputs(
         start_from=args.start_from,
@@ -212,17 +247,20 @@ def main() -> None:
             "arguments": vars(args),
         },
     )
-    record_source_inputs(
-        [
+    source_inputs = [
             "modules/dataset_tools/metadata/Image_location_metadata.txt",
             "modules/dataset_tools/metadata/aligned_Global_locations.txt",
             "modules/dataset_tools/metadata/all_aligned_Global_locations.txt",
             args.clean_id_registry,
             *args.fiducial_cut_file,
-        ]
-    )
+    ]
+    if args.spatial_fiducial_file:
+        source_inputs.append(args.spatial_fiducial_file)
+    record_source_inputs(source_inputs)
     dcc_actual_start = (
-        "model_output" if args.start_from == "model" else args.start_from
+        "model_output"
+        if args.start_from == "model" or args.dcc_from_model_output
+        else args.start_from
     )
     starting_point = {
         "requested": args.start_from,
@@ -241,7 +279,10 @@ def main() -> None:
             "DCC model integration is not available; starting from Kanik's raw "
             "model output instead"
         )
-    if args.start_from != "preprocessed_predicted_coordinates":
+    if (
+        args.start_from != "preprocessed_predicted_coordinates"
+        or args.dcc_from_model_output
+    ):
         starting_point["methods"]["DCC"]["processing"] = {
             "edge_threshold_pixels": 4,
             "coordinate_configuration": "current repository presets",
@@ -261,11 +302,47 @@ def main() -> None:
         )
         completed.append("kanik_archive")
         if args.start_from == "preprocessed_predicted_coordinates":
-            _run_stage(
-                "copy preprocessed coordinates and auxiliary CNN results",
-                lambda: seed_preprocessed_prediction_coordinates(args.input_source),
-            )
-            completed.append("preprocessed_prediction_coordinates")
+            if args.dcc_from_model_output:
+                _run_stage(
+                    "copy preprocessed CNN coordinates and auxiliary results",
+                    lambda: seed_cnn_prediction_coordinates(args.input_source),
+                )
+                _run_stage(
+                    "copy preprocessed FCN coordinates",
+                    lambda: seed_fcn_prediction_coordinates(args.input_source),
+                )
+                dcc_outputs = _run_stage(
+                    "copy Kanik/DCC model outputs",
+                    lambda: seed_dcc_model_outputs(
+                        args.input_source,
+                        front_relative_path=args.dcc_front_model_output,
+                        back_relative_path=args.dcc_back_model_output,
+                    ),
+                )
+                from modules.compare.kanik_to_mhio import convert_dcc_predictions
+
+                _run_stage(
+                    "DCC preprocessed coordinate conversion",
+                    lambda: convert_dcc_predictions(
+                        front_source=dcc_outputs["front"],
+                        back_source=dcc_outputs["back"],
+                        edge_threshold=4,
+                    ),
+                )
+                completed.extend(
+                    [
+                        "cnn_coordinates",
+                        "fcn_coordinates",
+                        "dcc_model_outputs",
+                        "dcc_coordinates",
+                    ]
+                )
+            else:
+                _run_stage(
+                    "copy preprocessed coordinates and auxiliary CNN results",
+                    lambda: seed_preprocessed_prediction_coordinates(args.input_source),
+                )
+                completed.append("preprocessed_prediction_coordinates")
         else:
             from modules.compare.kanik_to_mhio import convert_dcc_predictions
             from modules.compare.reconstruct_unet_coordinates import (
@@ -300,6 +377,7 @@ def main() -> None:
                         back_input=args.back_images,
                         batch_size=args.batch_size,
                         require_gpu=args.require_gpu,
+                        invert_output=args.invert_fcn_model_output,
                     ),
                 )
                 completed.append("fcn_model_outputs")
@@ -335,6 +413,15 @@ def main() -> None:
             )
             completed.append("dcc_coordinates")
 
+        if args.spatial_fiducial_file:
+            from modules.fiducial_regions import apply_prediction_fiducials
+
+            _run_stage(
+                "apply spatial fiducials to predictions",
+                lambda: apply_prediction_fiducials(args.spatial_fiducial_file),
+            )
+            completed.append("prediction_fiducials")
+
         from modules.compare.common_aligned_clean_list import clean_common_aligned
         from modules.compare.compare_CNN_aligned import compare_CNN_aligned
         from modules.compare.compare_DCC_aligned import compare_DCC_aligned
@@ -358,6 +445,7 @@ def main() -> None:
                 lambda: clean_common_aligned(
                     clean_id_registry=args.clean_id_registry,
                     fiducial_cut_files=tuple(args.fiducial_cut_file),
+                    spatial_fiducial_file=args.spatial_fiducial_file,
                 ),
             ),
             ("align CNN front/back", compare_CNN_aligned),

@@ -80,7 +80,7 @@ def evaluate_efficiency_purity_FCN():
 			continue
 		predicted_list_eval.append(predicted_list[i][:])
 
-	x = coordinates.Overlap(np.array(predicted_list_eval), np.array(true_eval), tolerance=15)
+	x = coordinates.Overlap(np.array(predicted_list_eval), np.array(true_eval), tolerance=12)
 
 	nearest_point_ind_of_all_pred = x.nearest_a
 	nearest_point_in_true_of_all_pred = []

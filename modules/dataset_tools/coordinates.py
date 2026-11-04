@@ -406,8 +406,8 @@ class Overlap():
         """
         # points, within tolerance 
         """
-        self.match_a = np.count_nonzero(self.dist<tolerance,axis=1)
-        self.match_b = np.count_nonzero(self.dist<tolerance,axis=0)
+        self.match_a = np.count_nonzero(self.dist <= tolerance, axis=1)
+        self.match_b = np.count_nonzero(self.dist <= tolerance, axis=0)
         
         """
         Was going to use:

@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "description": "Analysis-v2 spatial fiducial regions applied symmetrically to predictions and registered clean truth.",
+  "coordinate_frame": "c1_global_pixels",
+  "boundary_policy": "inclusive",
+  "image_edges": {
+    "margin_px": 4.0,
+    "image_width_px": 640.0,
+    "image_height_px": 480.0,
+    "first_evaluation_image": 251,
+    "last_evaluation_image": 500,
+    "front_scan": "d",
+    "back_scan": "dr",
+    "definition": "A point is excluded when its distance from any of the four edges of its source d/dr image is strictly less than 4 pixels. Points exactly 4 pixels from an edge are retained, matching the existing DCC preprocessing convention."
+  },
+  "alignment_holes": {
+    "shape": "circle",
+    "radius_px": 184.0,
+    "combination": "union",
+    "definition": "Union of the four front/back alignment-hole disks in the common aligned coordinate frame.",
+    "radius_provenance": "173-pixel measured outer-hole radius plus an 11-pixel rim allowance.",
+    "centers": [
+      {
+        "id": "AH_F0000",
+        "side": "front",
+        "coordinate": [8974.202712342274, -7.0]
+      },
+      {
+        "id": "AH_F0001",
+        "side": "front",
+        "coordinate": [10699.8580406921, 2676.8853594344355]
+      },
+      {
+        "id": "AH_B0000",
+        "side": "back",
+        "coordinate": [8972.997063764817, 0.0]
+      },
+      {
+        "id": "AH_B0001",
+        "side": "back",
+        "coordinate": [10695.854440007128, 2683.3071121529283]
+      }
+    ]
+  },
+  "physical_inconsistencies": {
+    "shape": "axis_aligned_square",
+    "width_px": 8.0,
+    "height_px": 8.0,
+    "combination": "union",
+    "definition": "Union of fixed 8 x 8 pixel front/back boxes centered on reviewed features that are not physically comparable between exposed and clean foils.",
+    "features": [
+      {
+        "id": "PI0000",
+        "review_source": "false_positive_cluster_0000",
+        "front_center": [6535.863984900909, 6125.303139575408],
+        "back_center": [6535.326284654437, 6123.81623727702]
+      },
+      {
+        "id": "PI0001",
+        "review_source": "false_positive_cluster_0001",
+        "front_center": [6421.114837333867, 9593.469586204214],
+        "back_center": [6417.653811867034, 9595.057447255418]
+      },
+      {
+        "id": "PI0002",
+        "review_source": "false_positive_cluster_0002",
+        "front_center": [7580.560934740904, 8335.060540249855],
+        "back_center": [7579.162371351236, 8339.097125495466]
+      },
+      {
+        "id": "PI0003",
+        "review_source": "false_positive_cluster_0003",
+        "front_center": [8036.5183845581405, 1782.1852283628848],
+        "back_center": [8036.094262908593, 1785.1968924919645]
+      },
+      {
+        "id": "PI0004",
+        "review_source": "false_positive_cluster_0004",
+        "front_center": [8423.995179914971, 2635.5394940828955],
+        "back_center": [8424.045659291382, 2637.538856939547]
+      },
+      {
+        "id": "PI0005",
+        "review_source": "false_positive_cluster_0008",
+        "front_center": [9639.534744594905, 3439.2810580956016],
+        "back_center": [9638.547683010682, 3439.8061384979696]
+      },
+      {
+        "id": "PI0006",
+        "review_source": "false_positive_cluster_0009",
+        "front_center": [9676.40577287486, -120.25202551319651],
+        "back_center": [9678.442995263817, -118.80298274711863]
+      },
+      {
+        "id": "PI0007",
+        "review_source": "false_positive_cluster_0012",
+        "front_center": [11513.5636987651, 6152.436037110012],
+        "back_center": [11515.613540998162, 6154.3849205902525]
+      },
+      {
+        "id": "PI0008",
+        "review_source": "false_positive_cluster_0014",
+        "front_center": [11749.843568987762, 4200.43716948212],
+        "back_center": [11746.907623923302, 4203.012092117551]
+      },
+      {
+        "id": "PI0009",
+        "review_source": "DMF0001",
+        "front_center": [6538.670644223814, 7820.181689485488],
+        "back_center": [6535.873517444479, 7828.2548599767115]
+      }
+    ]
+  }
+}

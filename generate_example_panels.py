@@ -29,12 +29,12 @@ def _nearby(predictions, primary, tolerance):
     return [
         predictions[index]
         for index, distance in enumerate(overlap.dist[:, 0])
-        if distance < tolerance
+        if distance <= tolerance
     ]
 
 
 def generate_example_panels(
-    ids: list[str] | None = None, *, tolerance: float = 15
+    ids: list[str] | None = None, *, tolerance: float = 12
 ) -> dict[str, int]:
     """Generate selected panels below ``gallery/examples`` in the active run."""
     ids = DEFAULT_IDS if ids is None else ids

@@ -2,6 +2,7 @@ import numpy as np
 from modules.dataset_tools import coordinates, mhio
 import matplotlib.pyplot as plt
 from modules.compare.tools import extract_coord
+from modules.compare.prediction_inputs import load_prediction_coordinates
 from modules.pipeline_paths import artifact_path
 
 '''
@@ -46,8 +47,8 @@ def compare_FCN_aligned(tolerance=12):
     """
 
     # Load front and back evaluation data
-    front_eval = mhio.load_json("predicted_etch_pits/FCN/final_pr.txt")
-    back_eval = mhio.load_json("predicted_etch_pits/FCN/final_reverse_pr.txt")
+    front_eval = load_prediction_coordinates("FCN", "front")
+    back_eval = load_prediction_coordinates("FCN", "back")
 
     # Output basic information about the pits
     print("# of front pits: {}".format(len(front_eval)))

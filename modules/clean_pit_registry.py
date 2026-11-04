@@ -11,6 +11,10 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 from modules.dataset_tools import mhio
+from modules.fiducial_regions import (
+    FiducialRegionEvaluator,
+    load_fiducial_regions,
+)
 from modules.pipeline_paths import PROJECT_ROOT, source_path
 
 
@@ -133,6 +137,7 @@ def _load_cut_exclusions(
 def validate_clean_truth_configuration(
     registry_path: str | Path,
     fiducial_cut_files: Iterable[str | Path] = (),
+    spatial_fiducial_file: str | Path | None = None,
 ) -> dict:
     """Validate selected immutable inputs before a pipeline run is created."""
     path, registry, registry_hash = load_clean_id_registry(registry_path)
@@ -141,12 +146,29 @@ def validate_clean_truth_configuration(
         registry_ids={record["id"] for record in registry},
         registry_sha256=registry_hash,
     )
+    spatial_path = None
+    spatial_hash = None
+    spatial_excluded_ids = []
+    if spatial_fiducial_file is not None:
+        spatial_path, config, spatial_hash = load_fiducial_regions(
+            spatial_fiducial_file
+        )
+        evaluator = FiducialRegionEvaluator(config)
+        spatial_excluded_ids = [
+            record["id"]
+            for record in registry
+            if evaluator.classify(record["coordinate"])["excluded"]
+        ]
     return {
         "registry_path": str(path),
         "registry_sha256": registry_hash,
         "registry_count": len(registry),
         "fiducial_cut_files": [str(item) for item in cut_paths],
-        "excluded_ids": list(exclusions),
+        "spatial_fiducial_file": (
+            None if spatial_path is None else str(spatial_path)
+        ),
+        "spatial_fiducial_sha256": spatial_hash,
+        "excluded_ids": sorted(set(exclusions) | set(spatial_excluded_ids)),
     }
 
 
@@ -155,6 +177,7 @@ def select_clean_truth(
     *,
     registry_path: str | Path,
     fiducial_cut_files: Iterable[str | Path] = (),
+    spatial_fiducial_file: str | Path | None = None,
 ) -> dict:
     """Validate the regenerated truth, then filter registry records by ID.
 
@@ -187,6 +210,23 @@ def select_clean_truth(
         registry_ids={record["id"] for record in registry},
         registry_sha256=registry_hash,
     )
+    spatial_path = None
+    spatial_hash = None
+    if spatial_fiducial_file is not None:
+        spatial_path, config, spatial_hash = load_fiducial_regions(
+            spatial_fiducial_file
+        )
+        evaluator = FiducialRegionEvaluator(config)
+        for record in registry:
+            classification = evaluator.classify(record["coordinate"])
+            if classification["excluded"]:
+                exclusions[record["id"]].append(
+                    {
+                        "cut_file": str(spatial_path),
+                        "reason": ", ".join(classification["reasons"]),
+                        "spatial_fiducial": classification,
+                    }
+                )
     active = [record for record in registry if record["id"] not in exclusions]
     excluded = []
     for record in registry:
@@ -201,6 +241,10 @@ def select_clean_truth(
         "registry_sha256": registry_hash,
         "registry_count": len(registry),
         "fiducial_cut_files": [str(item) for item in cut_paths],
+        "spatial_fiducial_file": (
+            None if spatial_path is None else str(spatial_path)
+        ),
+        "spatial_fiducial_sha256": spatial_hash,
         "active_count": len(active),
         "excluded_count": len(excluded),
         "active_records": active,

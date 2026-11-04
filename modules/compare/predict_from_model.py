@@ -20,7 +20,14 @@ from modules.pipeline_paths import (
 )
 
 
-def _predict_dataset(model, source: Path, destination: Path, batch_size: int) -> dict:
+def _predict_dataset(
+    model,
+    source: Path,
+    destination: Path,
+    batch_size: int,
+    *,
+    invert_output: bool = False,
+) -> dict:
     array = np.load(source, mmap_mode="r", allow_pickle=False)
     if array.ndim != 4 or array.shape[-1] != 10:
         raise ValueError(f"Expected (N,H,W,10) input at {source}; found {array.shape}")
@@ -50,6 +57,11 @@ def _predict_dataset(model, source: Path, destination: Path, batch_size: int) ->
                 raise ValueError(
                     f"Unexpected model output {prediction.shape}; expected {expected}"
                 )
+            if invert_output:
+                # The current FCN extractor historically thresholds background
+                # probability.  Pit-positive models therefore need an explicit
+                # and provenance-recorded conversion before reconstruction.
+                prediction = np.float32(1.0) - prediction
             output[start:stop] = prediction
             minimum = min(minimum, float(prediction.min()))
             maximum = max(maximum, float(prediction.max()))
@@ -74,6 +86,7 @@ def _predict_dataset(model, source: Path, destination: Path, batch_size: int) ->
         "output_shape": list(output_shape),
         "output_dtype": "float32",
         "output_sha256": sha256_file(destination),
+        "output_transform": "1 - native model output" if invert_output else "none",
         "probability_min": minimum,
         "probability_max": maximum,
         "probability_mean": total / elements,
@@ -88,6 +101,7 @@ def generate_probability_masks(
     back_input: str | os.PathLike[str] = "numpy_data_eval/preprocessed_dirty_reverse_eval.npy",
     batch_size: int = 4,
     require_gpu: bool = False,
+    invert_output: bool = False,
 ) -> dict:
     """Run inference once and save both probability stacks below the active run."""
     if batch_size < 1:
@@ -121,13 +135,16 @@ def generate_probability_masks(
         "tensorflow_version": tf.__version__,
         "visible_gpus": [gpu.name for gpu in gpus],
         "batch_size": batch_size,
+        "native_model_output": "pit probability" if invert_output else "stored probability",
+        "stored_model_output": "background probability" if invert_output else "native model output",
+        "invert_output": invert_output,
         "datasets": {},
     }
     result["datasets"]["front"] = _predict_dataset(
-        model, front_file, front_output, batch_size
+        model, front_file, front_output, batch_size, invert_output=invert_output
     )
     result["datasets"]["back"] = _predict_dataset(
-        model, back_file, back_output, batch_size
+        model, back_file, back_output, batch_size, invert_output=invert_output
     )
     with metadata_output.open("x", encoding="utf-8") as stream:
         json.dump(result, stream, indent=2)
@@ -150,6 +167,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--back-input", default="numpy_data_eval/preprocessed_dirty_reverse_eval.npy")
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--require-gpu", action="store_true")
+    parser.add_argument(
+        "--invert-output",
+        action="store_true",
+        help="Store 1 minus the native output for pit-positive FCN models",
+    )
     return parser.parse_args()
 
 
@@ -162,6 +184,7 @@ def main() -> None:
         back_input=args.back_input,
         batch_size=args.batch_size,
         require_gpu=args.require_gpu,
+        invert_output=args.invert_output,
     )
     print(json.dumps(result, indent=2))
 

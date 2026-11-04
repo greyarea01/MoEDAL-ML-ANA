@@ -17,6 +17,7 @@ def clean_common_aligned(
     *,
     clean_id_registry: str | Path,
     fiducial_cut_files: tuple[str | Path, ...] = (),
+    spatial_fiducial_file: str | Path | None = None,
 ):
     """
     Filters the common etch pit list based on a threshold, removing pits
@@ -55,6 +56,7 @@ def clean_common_aligned(
         common,
         registry_path=clean_id_registry,
         fiducial_cut_files=fiducial_cut_files,
+        spatial_fiducial_file=spatial_fiducial_file,
     )
     save_clean_truth_selection(selection)
     print(
@@ -70,6 +72,7 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--clean-id-registry", required=True)
     parser.add_argument("--fiducial-cut-file", action="append", default=[])
+    parser.add_argument("--spatial-fiducial-file")
     parser.add_argument("--threshold", type=int, default=4)
     return parser.parse_args()
 
@@ -80,4 +83,5 @@ if __name__ == "__main__":
         threshold=args.threshold,
         clean_id_registry=args.clean_id_registry,
         fiducial_cut_files=tuple(args.fiducial_cut_file),
+        spatial_fiducial_file=args.spatial_fiducial_file,
     )

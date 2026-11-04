@@ -30,7 +30,7 @@ def plot(true, predicted, name, save=False):
     plt.show()
 
 
-def evaluate_CNN_aligned(tolerance=15):
+def evaluate_CNN_aligned(tolerance=12):
     """
     Compares predicted pits from the CNN model (aligned data) with true pits, identifies false negatives,
     false positives, true positives, and fragments, and saves the results.

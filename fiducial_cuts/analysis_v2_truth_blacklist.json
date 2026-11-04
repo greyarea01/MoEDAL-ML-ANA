@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "clean_id_registry_sha256": "0a327a731b7233d17adaf3b91d126d5fd4c3ec46dcd7f3796ef3b374a9ef6beb",
+  "description": "Analysis-v2 clean-pit exclusions for etch pits cut in half during scanning. The immutable registry and IDs are unchanged.",
+  "exclude_clean_ids": [
+    {
+      "id": "C0123",
+      "reason": "etch pit cut in half during scanning"
+    },
+    {
+      "id": "C0300",
+      "reason": "etch pit cut in half during scanning"
+    },
+    {
+      "id": "C0997",
+      "reason": "etch pit cut in half during scanning"
+    }
+  ]
+}

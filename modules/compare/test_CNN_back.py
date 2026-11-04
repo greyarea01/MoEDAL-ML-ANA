@@ -2,6 +2,7 @@ import numpy as np
 from modules.dataset_tools import coordinates, mhio
 import matplotlib.pyplot as plt
 from modules.compare.tools import extract_coord
+from modules.compare.prediction_inputs import load_prediction_coordinates
 from modules.pipeline_paths import artifact_path
 
 
@@ -30,7 +31,7 @@ def plot(true, predicted, name, save=False):
     plt.show()
 
 
-def evaluate_CNN_pits_back(tolerance=15):
+def evaluate_CNN_pits_back(tolerance=12):
     """
     Compares predicted pits (from CNN-back) with true pits, calculates false negatives,
     false positives, true positives, and fragments, and saves the results.
@@ -43,7 +44,7 @@ def evaluate_CNN_pits_back(tolerance=15):
     """
 
     # Load predicted pits and true pits
-    predicted_list = mhio.load_json("predicted_etch_pits/CNN/final_reverse_pr.txt")
+    predicted_list = load_prediction_coordinates("CNN", "back")
     predicted_list_eval = []
     C1_true_eval = mhio.load_json("Aligned_clean.txt")  # True pits from Lewis's and Kanik's data
     CS = coordinates.Coord_system()

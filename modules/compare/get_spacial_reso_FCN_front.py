@@ -2,6 +2,7 @@ import numpy as np
 from modules.dataset_tools import coordinates, mhio
 import matplotlib.pyplot as plt
 from modules.compare.tools import extract_coord
+from modules.compare.prediction_inputs import load_prediction_coordinates
 from modules.pipeline_paths import artifact_path
 
 
@@ -109,7 +110,7 @@ def get_spacial_reso_FCN_front():
     true_eval = mhio.load_json("Aligned_clean.txt")  # True pits in Lewis's and Kanik's data
     CS = coordinates.Coord_system()
 
-    predicted_list = mhio.load_json("predicted_etch_pits/FCN/final_pr.txt")
+    predicted_list = load_prediction_coordinates("FCN", "front")
     predicted_list_eval = []
 
     # Filter invalid pits from the predicted list
@@ -122,8 +123,8 @@ def get_spacial_reso_FCN_front():
             continue
         predicted_list_eval.append(predicted_list[i][:])
 
-    # Compare predicted pits with true pits using a tolerance of 15
-    x = coordinates.Overlap(np.array(predicted_list_eval), np.array(true_eval), tolerance=15)
+    # Compare predicted pits with true pits using the analysis-wide 12 px tolerance.
+    x = coordinates.Overlap(np.array(predicted_list_eval), np.array(true_eval), tolerance=12)
     coordinates.tally(x)
 
     true_pred_ind = x.A_in_B()
@@ -145,7 +146,7 @@ def get_spacial_reso_FCN_front():
          name="FCN_front_all_pred", log=True, save=True)
 
     # Now for the true predictions
-    y = coordinates.Overlap(np.array(true_pred), np.array(true_eval), tolerance=15)
+    y = coordinates.Overlap(np.array(true_pred), np.array(true_eval), tolerance=12)
     nearest_point_ind_of_true_pred = y.nearest_a
     nearest_point_in_true_eval_of_true_pred = []
     nearest_x_y_dist_of_true_pred = []

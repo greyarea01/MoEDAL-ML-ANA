@@ -76,6 +76,12 @@ def convert_dcc_predictions(
     back_global = _to_global(back_local, side="back")
     mhio.save_json(front_global, "predicted_etch_pits/DCC/final_pr.txt")
     mhio.save_json(back_global, "predicted_etch_pits/DCC/final_reverse_pr.txt")
+    mhio.save_json(
+        front_local, "predicted_etch_pits/DCC/front_local_coordinates.txt"
+    )
+    mhio.save_json(
+        back_local, "predicted_etch_pits/DCC/back_local_coordinates.txt"
+    )
     report = {
         "edge_threshold": edge_threshold,
         "front": {

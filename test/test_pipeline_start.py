@@ -15,11 +15,13 @@ from modules.pipeline_start import (
     DCC_FRONT_MODEL_OUTPUT,
     DCC_FRONT_KANIK_OUTPUT,
     FCN_BACK_MODEL_OUTPUT,
+    FCN_COORDINATE_ARTIFACTS,
     FCN_FRONT_MODEL_OUTPUT,
     KANIK_CLEAN_TRUTH,
     PREDICTION_COORDINATE_ARTIFACTS,
     seed_cnn_prediction_coordinates,
     seed_dcc_model_outputs,
+    seed_fcn_prediction_coordinates,
     seed_fcn_model_outputs,
     seed_kanik_archive,
     seed_preprocessed_prediction_coordinates,
@@ -123,6 +125,16 @@ class PipelineStartingPointTests(unittest.TestCase):
             (source / DCC_BACK_KANIK_OUTPUT).read_bytes(),
         )
 
+    def test_hybrid_coordinate_start_can_seed_fcn_without_historical_dcc(self):
+        source = self._write_source_files(FCN_COORDINATE_ARTIFACTS)
+        run = create_pipeline_run(self.root / "run")
+
+        result = seed_fcn_prediction_coordinates(source)
+
+        self.assertEqual(len(result["coordinate_artifacts"]), 2)
+        for relative in FCN_COORDINATE_ARTIFACTS:
+            self.assertEqual((run / relative).read_bytes(), (source / relative).read_bytes())
+
     def test_coordinate_start_rejects_a_missing_method_side(self):
         source = self._write_source_files(
             [
@@ -156,6 +168,28 @@ class PipelineStartingPointTests(unittest.TestCase):
         self.assertEqual(report["mapping"]["back"]["offset"], [10, 0])
         self.assertEqual(report["front"]["count"], 1531)
         self.assertEqual(report["back"]["count"], 1504)
+        self.assertEqual(
+            len(
+                json.loads(
+                    (
+                        run
+                        / "predicted_etch_pits/DCC/front_local_coordinates.txt"
+                    ).read_text(encoding="utf-8")
+                )
+            ),
+            1531,
+        )
+        self.assertEqual(
+            len(
+                json.loads(
+                    (
+                        run
+                        / "predicted_etch_pits/DCC/back_local_coordinates.txt"
+                    ).read_text(encoding="utf-8")
+                )
+            ),
+            1504,
+        )
         self.assertEqual(
             sha256_file(run / "predicted_etch_pits/DCC/final_pr.txt"),
             "d159d931c283ac8ed5c1f2df33245787ac19e3f469be80aad94187ded26689f4",
